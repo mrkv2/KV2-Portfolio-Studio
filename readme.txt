@@ -3,7 +3,7 @@ Contributors: kv2
 Tags: portfolio, seo, image metadata, exif, rank math
 Requires at least: 6.5
 Requires PHP: 7.4
-Stable tag: 1.1.6
+Stable tag: 1.1.7
 License: Proprietary
 
 Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonnées d’images avec ChatGPT.
@@ -20,6 +20,14 @@ Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonné
 Le plugin ne supprime aucune donnée à la désinstallation. Le module EXIF lit le fichier original mais ne le réécrit pas dans la version 1.1.
 
 == Changelog ==
+
+= 1.1.7 =
+* Consacre la page avec shortcode comme catalogue SEO principal et redirige l’archive technique en 301.
+* Ajoute un H1 automatique uniquement lorsqu’aucun H1 n’existe déjà dans la page ou Elementor.
+* Ajoute les titres et descriptions de secours Rank Math, les canonicals paginés et le noindex des filtres temporaires.
+* Active CreativeWork sans dupliquer une entité déjà présente dans le graphe Rank Math.
+* Durcit les imports JSON, les permissions REST et le nettoyage des contenus importés depuis WP Portfolio.
+* Ajoute des contrôles automatisés et une intégration continue PHP 7.4/8.3.
 
 = 1.1.6 =
 * Enrichit le CTA global et les fiches avec téléphone cliquable, parcours client et points forts.

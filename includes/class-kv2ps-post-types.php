@@ -112,25 +112,57 @@ final class KV2PS_Post_Types {
 		);
 
 		foreach ( $fields as $key => $type ) {
+			$rest_schema = array(
+				'type'    => $type,
+				'context' => array( 'edit' ),
+			);
+			if ( 'array' === $type ) {
+				$rest_schema['items'] = array( 'type' => 'integer' );
+			}
 			$args = array(
 				'type'              => $type,
 				'single'            => true,
-				'show_in_rest'      => true,
-				'sanitize_callback' => 'array' === $type ? array( __CLASS__, 'sanitize_ids' ) : ( 'boolean' === $type ? 'rest_sanitize_boolean' : 'sanitize_textarea_field' ),
-				'auth_callback'     => function() {
-					return current_user_can( 'edit_posts' );
+				'show_in_rest'      => array( 'schema' => $rest_schema ),
+				'sanitize_callback' => array( __CLASS__, 'sanitize_meta_value' ),
+				'auth_callback'     => function( $allowed, $meta_key, $object_id ) {
+					unset( $allowed, $meta_key );
+					return $object_id && current_user_can( 'edit_post', (int) $object_id );
 				},
 			);
-			if ( 'array' === $type ) {
-				$args['show_in_rest'] = array(
-					'schema' => array(
-						'type'  => 'array',
-						'items' => array( 'type' => 'integer' ),
-					),
-				);
-			}
 			register_post_meta( self::POST_TYPE, $key, $args );
 		}
+	}
+
+	public static function sanitize_meta_value( $value, $meta_key ) {
+		if ( in_array( $meta_key, array( '_kv2ps_before_images', '_kv2ps_after_images' ), true ) ) {
+			return self::sanitize_ids( $value );
+		}
+		if ( in_array( $meta_key, array( '_kv2ps_confidential', '_kv2ps_testimonial_consent', '_kv2ps_cta_override', '_kv2ps_cta_secondary_enabled' ), true ) ) {
+			return rest_sanitize_boolean( $value );
+		}
+		if ( in_array( $meta_key, array( '_kv2ps_testimonial_source_url', '_kv2ps_cta_form_url' ), true ) ) {
+			return esc_url_raw( $value );
+		}
+		if ( '_kv2ps_testimonial_rating' === $meta_key ) {
+			$rating = absint( $value );
+			return $rating >= 1 && $rating <= 5 ? (string) $rating : '';
+		}
+		if ( '_kv2ps_cta_primary_action' === $meta_key ) {
+			$action = sanitize_key( $value );
+			return in_array( $action, array( 'click_to_chat', 'form' ), true ) ? $action : '';
+		}
+		if ( in_array( $meta_key, array( '_kv2ps_project_date', '_kv2ps_testimonial_date' ), true ) ) {
+			$date = sanitize_text_field( $value );
+			if ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $date, $matches ) || ! checkdate( (int) $matches[2], (int) $matches[3], (int) $matches[1] ) ) {
+				return '';
+			}
+			return $date;
+		}
+		if ( in_array( $meta_key, array( '_kv2ps_problem', '_kv2ps_intervention', '_kv2ps_result', '_kv2ps_materials', '_kv2ps_initial_state', '_kv2ps_constraints', '_kv2ps_testimonial', '_kv2ps_cta_text' ), true ) ) {
+			return sanitize_textarea_field( $value );
+		}
+
+		return sanitize_text_field( $value );
 	}
 
 	public static function sanitize_ids( $ids ) {

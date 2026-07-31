@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class KV2PS_Schema {
 	public static function init() {
-		add_filter( 'rank_math/json_ld', array( __CLASS__, 'add_rank_math_graph' ), 90, 2 );
+		add_filter( 'rank_math/json_ld', array( __CLASS__, 'add_rank_math_graph' ), 999, 2 );
 	}
 
 	public static function add_rank_math_graph( $data, $jsonld ) {
@@ -25,24 +25,62 @@ final class KV2PS_Schema {
 		);
 
 		if ( ! empty( $settings['rank_math_schema'] ) && ! self::has_type( $data, 'CreativeWork' ) ) {
-			$images = array_values( array_filter( array_map( 'wp_get_attachment_url', $image_ids ) ) );
+			$permalink   = get_permalink( $post_id );
+			$images      = array_values( array_filter( array_map( 'wp_get_attachment_url', $image_ids ) ) );
+			$description = trim( (string) get_the_excerpt( $post_id ) );
+			if ( ! $description ) {
+				$description_parts = array();
+				foreach ( array( '_kv2ps_problem', '_kv2ps_intervention', '_kv2ps_result' ) as $meta_key ) {
+					$value = trim( (string) get_post_meta( $post_id, $meta_key, true ) );
+					if ( $value ) {
+						$description_parts[] = $value;
+					}
+				}
+				$description = implode( ' ', $description_parts );
+			}
 			$node   = array(
 				'@type'        => 'CreativeWork',
-				'@id'          => get_permalink( $post_id ) . '#realisation',
+				'@id'          => $permalink . '#realisation',
 				'name'         => get_the_title( $post_id ),
-				'url'          => get_permalink( $post_id ),
-				'description'  => wp_strip_all_tags( get_the_excerpt( $post_id ) ),
+				'url'          => $permalink,
+				'description'  => wp_html_excerpt( wp_strip_all_tags( $description ), 500, '…' ),
 				'dateCreated'  => get_post_meta( $post_id, '_kv2ps_project_date', true ) ?: get_the_date( 'c', $post_id ),
 				'dateModified' => get_the_modified_date( 'c', $post_id ),
+				'inLanguage'   => get_bloginfo( 'language' ),
 			);
+
+			$webpage_id = self::find_type_node_id( $data, 'WebPage' );
+			$creator_id = self::find_type_node_id( $data, 'Organization' );
+			if ( $webpage_id ) {
+				$node['mainEntityOfPage'] = array( '@id' => $webpage_id );
+			}
+			if ( $creator_id ) {
+				$node['creator'] = array( '@id' => $creator_id );
+			}
 
 			if ( $images ) {
 				$node['image'] = $images;
 			}
 
-			$service_terms = wp_get_post_terms( $post_id, 'kv2_service', array( 'fields' => 'names' ) );
-			if ( ! is_wp_error( $service_terms ) && $service_terms ) {
-				$node['keywords'] = implode( ', ', $service_terms );
+			$keywords = array();
+			foreach ( array( 'kv2_service', 'kv2_meuble', 'kv2_style', 'kv2_technique' ) as $taxonomy ) {
+				$terms = wp_get_post_terms( $post_id, $taxonomy, array( 'fields' => 'names' ) );
+				if ( ! is_wp_error( $terms ) && $terms ) {
+					$keywords = array_merge( $keywords, $terms );
+				}
+			}
+			if ( $keywords ) {
+				$node['keywords'] = implode( ', ', array_unique( $keywords ) );
+			}
+
+			if ( ! get_post_meta( $post_id, '_kv2ps_confidential', true ) ) {
+				$cities = wp_get_post_terms( $post_id, 'kv2_ville', array( 'fields' => 'names' ) );
+				if ( ! is_wp_error( $cities ) && $cities ) {
+					$node['contentLocation'] = array(
+						'@type' => 'Place',
+						'name'  => implode( ', ', $cities ),
+					);
+				}
 			}
 
 			$data['kv2ps-creativework'] = array_filter( $node );
@@ -107,6 +145,18 @@ final class KV2PS_Schema {
 			}
 		}
 		return false;
+	}
+
+	private static function find_type_node_id( $data, $type ) {
+		foreach ( $data as $node ) {
+			if ( ! is_array( $node ) || empty( $node['@id'] ) || empty( $node['@type'] ) ) {
+				continue;
+			}
+			if ( in_array( $type, (array) $node['@type'], true ) ) {
+				return $node['@id'];
+			}
+		}
+		return '';
 	}
 
 	private static function find_image_key( $data, $url ) {

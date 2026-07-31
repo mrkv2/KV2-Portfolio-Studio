@@ -80,7 +80,7 @@ final class KV2PS_Importer {
 				continue;
 			}
 
-			$content = apply_filters( 'kv2ps_import_source_content', trim( $source->post_content ), $source );
+			$content = wp_kses_post( apply_filters( 'kv2ps_import_source_content', trim( $source->post_content ), $source ) );
 			if ( ! $content ) {
 				$content = sprintf(
 					'<p>%s</p>',
@@ -92,8 +92,8 @@ final class KV2PS_Importer {
 				array(
 					'post_type'    => KV2PS_Post_Types::POST_TYPE,
 					'post_status'  => 'draft',
-					'post_title'   => $source->post_title,
-					'post_excerpt' => $source->post_excerpt,
+					'post_title'   => sanitize_text_field( $source->post_title ),
+					'post_excerpt' => sanitize_textarea_field( $source->post_excerpt ),
 					'post_content' => wp_slash( $content ),
 					'post_author'  => get_current_user_id(),
 				),
@@ -139,7 +139,8 @@ final class KV2PS_Importer {
 
 		foreach ( get_post_meta( $source_id ) as $values ) {
 			foreach ( (array) $values as $value ) {
-				$attachment_id = self::find_attachment_in_value( maybe_unserialize( $value ) );
+				// get_post_meta() has already normalized serialized values.
+				$attachment_id = self::find_attachment_in_value( $value );
 				if ( $attachment_id ) {
 					return $attachment_id;
 				}

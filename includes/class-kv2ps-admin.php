@@ -84,6 +84,9 @@ final class KV2PS_Admin {
 			'archive_title'             => isset( $input['archive_title'] ) ? sanitize_text_field( $input['archive_title'] ) : '',
 			'archive_intro'             => isset( $input['archive_intro'] ) ? wp_kses_post( $input['archive_intro'] ) : '',
 			'portfolio_page_url'        => isset( $input['portfolio_page_url'] ) ? esc_url_raw( $input['portfolio_page_url'] ) : '',
+			'portfolio_seo_title'       => isset( $input['portfolio_seo_title'] ) ? sanitize_text_field( $input['portfolio_seo_title'] ) : '',
+			'portfolio_meta_description'    => isset( $input['portfolio_meta_description'] ) ? sanitize_textarea_field( $input['portfolio_meta_description'] ) : '',
+			'redirect_archive_to_portfolio' => empty( $input['redirect_archive_to_portfolio'] ) ? '0' : '1',
 			'contact_url'               => isset( $input['contact_url'] ) ? esc_url_raw( $input['contact_url'] ) : '',
 			'phone'                     => isset( $input['phone'] ) ? sanitize_text_field( $input['phone'] ) : '',
 			'whatsapp'                  => isset( $input['whatsapp'] ) ? preg_replace( '/[^0-9+]/', '', $input['whatsapp'] ) : '',
@@ -134,19 +137,23 @@ final class KV2PS_Admin {
 		?>
 		<div class="wrap kv2ps-admin">
 			<h1><?php esc_html_e( 'Réglages de KV2 Portfolio Studio', 'kv2-portfolio-studio' ); ?></h1>
-			<p><?php esc_html_e( 'Rank Math conserve la main sur les titres, descriptions, canonicals et sitemaps. Le complément CreativeWork est facultatif et désactivé par défaut.', 'kv2-portfolio-studio' ); ?></p>
+			<p><?php esc_html_e( 'Rank Math conserve la main sur les valeurs déjà renseignées. KV2 fournit uniquement les secours manquants, la pagination canonique et un CreativeWork non dupliqué.', 'kv2-portfolio-studio' ); ?></p>
 			<form action="options.php" method="post">
 				<?php settings_fields( 'kv2ps_settings_group' ); ?>
 				<table class="form-table" role="presentation">
 					<tr>
-						<th scope="row"><label for="kv2ps-archive-title"><?php esc_html_e( 'Titre de l’archive', 'kv2-portfolio-studio' ); ?></label></th>
-						<td><input class="regular-text" id="kv2ps-archive-title" name="kv2ps_settings[archive_title]" type="text" value="<?php echo esc_attr( $settings['archive_title'] ); ?>"></td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="kv2ps-archive-intro"><?php esc_html_e( 'Introduction', 'kv2-portfolio-studio' ); ?></label></th>
-						<td><textarea class="large-text" id="kv2ps-archive-intro" name="kv2ps_settings[archive_intro]" rows="5"><?php echo esc_textarea( $settings['archive_intro'] ); ?></textarea></td>
-					</tr>
-					<tr><th colspan="2"><h2><?php esc_html_e( 'Affichage des réalisations', 'kv2-portfolio-studio' ); ?></h2></th></tr>
+					<th scope="row"><label for="kv2ps-archive-title"><?php esc_html_e( 'H1 de la page principale', 'kv2-portfolio-studio' ); ?></label></th>
+					<td><input class="regular-text" id="kv2ps-archive-title" name="kv2ps_settings[archive_title]" type="text" value="<?php echo esc_attr( $settings['archive_title'] ); ?>"><p class="description"><?php esc_html_e( 'Le shortcode l’affiche automatiquement uniquement sur la page principale configurée.', 'kv2-portfolio-studio' ); ?></p></td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="kv2ps-archive-intro"><?php esc_html_e( 'Introduction sous le H1', 'kv2-portfolio-studio' ); ?></label></th>
+					<td><textarea class="large-text" id="kv2ps-archive-intro" name="kv2ps_settings[archive_intro]" rows="5"><?php echo esc_textarea( $settings['archive_intro'] ); ?></textarea></td>
+				</tr>
+				<tr><th scope="row"><label for="kv2ps-portfolio-page-url"><?php esc_html_e( 'Page principale des réalisations', 'kv2-portfolio-studio' ); ?></label></th><td><input class="regular-text code" id="kv2ps-portfolio-page-url" name="kv2ps_settings[portfolio_page_url]" type="url" value="<?php echo esc_attr( $settings['portfolio_page_url'] ); ?>"><p class="description"><?php esc_html_e( 'URL canonique du catalogue et destination de « Toutes les réalisations ».', 'kv2-portfolio-studio' ); ?></p></td></tr>
+				<tr><th scope="row"><label for="kv2ps-portfolio-seo-title"><?php esc_html_e( 'Titre SEO de secours', 'kv2-portfolio-studio' ); ?></label></th><td><input class="large-text" id="kv2ps-portfolio-seo-title" name="kv2ps_settings[portfolio_seo_title]" type="text" value="<?php echo esc_attr( $settings['portfolio_seo_title'] ); ?>"><p class="description"><?php esc_html_e( 'Utilisé uniquement si aucun titre Rank Math propre à la page n’est enregistré.', 'kv2-portfolio-studio' ); ?></p></td></tr>
+				<tr><th scope="row"><label for="kv2ps-portfolio-meta-description"><?php esc_html_e( 'Meta description de secours', 'kv2-portfolio-studio' ); ?></label></th><td><textarea class="large-text" id="kv2ps-portfolio-meta-description" name="kv2ps_settings[portfolio_meta_description]" rows="3"><?php echo esc_textarea( $settings['portfolio_meta_description'] ); ?></textarea><p class="description"><?php esc_html_e( 'Utilisée uniquement lorsque Rank Math ne produit aucune description.', 'kv2-portfolio-studio' ); ?></p></td></tr>
+				<tr><th scope="row"><?php esc_html_e( 'Archive technique', 'kv2-portfolio-studio' ); ?></th><td><label><input name="kv2ps_settings[redirect_archive_to_portfolio]" type="checkbox" value="1" <?php checked( $settings['redirect_archive_to_portfolio'], '1' ); ?>> <?php esc_html_e( 'Rediriger en 301 /realisations/ vers la page principale, sans toucher aux fiches individuelles', 'kv2-portfolio-studio' ); ?></label></td></tr>
+				<tr><th colspan="2"><h2><?php esc_html_e( 'Affichage des réalisations', 'kv2-portfolio-studio' ); ?></h2></th></tr>
 					<tr>
 						<th scope="row"><label for="kv2ps-archive-layout"><?php esc_html_e( 'Disposition', 'kv2-portfolio-studio' ); ?></label></th>
 						<td><select id="kv2ps-archive-layout" name="kv2ps_settings[archive_layout]"><option value="grid" <?php selected( $settings['archive_layout'], 'grid' ); ?>><?php esc_html_e( 'Grille régulière', 'kv2-portfolio-studio' ); ?></option><option value="tiles" <?php selected( $settings['archive_layout'], 'tiles' ); ?>><?php esc_html_e( 'Tuiles éditoriales', 'kv2-portfolio-studio' ); ?></option><option value="masonry" <?php selected( $settings['archive_layout'], 'masonry' ); ?>><?php esc_html_e( 'Masonry', 'kv2-portfolio-studio' ); ?></option></select></td>
@@ -180,7 +187,6 @@ final class KV2PS_Admin {
 						<td><label><input name="kv2ps_settings[archive_show_filters]" type="checkbox" value="1" <?php checked( $settings['archive_show_filters'], '1' ); ?>> <?php esc_html_e( 'Afficher les filtres de services', 'kv2-portfolio-studio' ); ?></label><br><label><input name="kv2ps_settings[archive_show_search]" type="checkbox" value="1" <?php checked( $settings['archive_show_search'], '1' ); ?>> <?php esc_html_e( 'Afficher la recherche à droite', 'kv2-portfolio-studio' ); ?></label><br><label><input name="kv2ps_settings[archive_show_cta]" type="checkbox" value="1" <?php checked( $settings['archive_show_cta'], '1' ); ?>> <?php esc_html_e( 'Afficher le CTA global sous les réalisations', 'kv2-portfolio-studio' ); ?></label></td>
 					</tr>
 					<tr><th colspan="2"><h2><?php esc_html_e( 'CTA intelligent', 'kv2-portfolio-studio' ); ?></h2><p><?php esc_html_e( 'Ces valeurs deviennent les valeurs par défaut de toutes les réalisations. Elles peuvent être remplacées projet par projet.', 'kv2-portfolio-studio' ); ?></p></th></tr>
-					<tr><th scope="row"><label for="kv2ps-portfolio-page-url"><?php esc_html_e( 'Page principale des réalisations', 'kv2-portfolio-studio' ); ?></label></th><td><input class="regular-text code" id="kv2ps-portfolio-page-url" name="kv2ps_settings[portfolio_page_url]" type="url" value="<?php echo esc_attr( $settings['portfolio_page_url'] ); ?>"><p class="description"><?php esc_html_e( 'Destination du lien « Toutes les réalisations » depuis une fiche.', 'kv2-portfolio-studio' ); ?></p></td></tr>
 					<tr><th scope="row"><label for="kv2ps-cta-title"><?php esc_html_e( 'Titre du CTA', 'kv2-portfolio-studio' ); ?></label></th><td><input class="regular-text" id="kv2ps-cta-title" name="kv2ps_settings[cta_title]" type="text" value="<?php echo esc_attr( $settings['cta_title'] ); ?>"></td></tr>
 					<tr><th scope="row"><label for="kv2ps-cta-text"><?php esc_html_e( 'Texte du CTA', 'kv2-portfolio-studio' ); ?></label></th><td><textarea class="large-text" id="kv2ps-cta-text" name="kv2ps_settings[cta_text]" rows="3"><?php echo esc_textarea( $settings['cta_text'] ); ?></textarea></td></tr>
 					<tr><th scope="row"><label for="kv2ps-cta-process-title"><?php esc_html_e( 'Titre du parcours', 'kv2-portfolio-studio' ); ?></label></th><td><input class="regular-text" id="kv2ps-cta-process-title" name="kv2ps_settings[cta_process_title]" type="text" value="<?php echo esc_attr( $settings['cta_process_title'] ); ?>"></td></tr>

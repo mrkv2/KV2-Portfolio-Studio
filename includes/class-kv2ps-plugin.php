@@ -23,6 +23,7 @@ final class KV2PS_Plugin {
 		add_shortcode( 'kv2_portfolio', array( $this, 'portfolio_shortcode' ) );
 
 		KV2PS_Image_Metadata::init();
+		KV2PS_SEO::init();
 		KV2PS_Schema::init();
 		KV2PS_Redirects::init();
 
@@ -110,20 +111,36 @@ final class KV2PS_Plugin {
 			}
 		}
 
+		if ( version_compare( $installed_version, '1.1.7', '<' ) ) {
+			$defaults = self::default_settings();
+			foreach ( array( 'portfolio_seo_title', 'portfolio_meta_description', 'redirect_archive_to_portfolio' ) as $key ) {
+				if ( ! isset( $settings[ $key ] ) ) {
+					$settings[ $key ] = $defaults[ $key ];
+				}
+			}
+			if ( empty( $settings['archive_title'] ) || 'Nos réalisations' === $settings['archive_title'] ) {
+				$settings['archive_title'] = $defaults['archive_title'];
+			}
+			$settings['rank_math_schema'] = '1';
+		}
+
 		update_option( 'kv2ps_settings', $settings );
 		update_option( 'kv2ps_version', KV2PS_VERSION );
 	}
 
 	public static function default_settings() {
 		return array(
-			'archive_title'              => 'Nos réalisations',
+			'archive_title'              => 'Réalisations de tapisserie à Montpellier',
 			'archive_intro'              => '',
 			'portfolio_page_url'         => home_url( '/realisation-tapisserie/' ),
+			'portfolio_seo_title'        => 'Réalisations de tapisserie à Montpellier | ' . get_bloginfo( 'name' ),
+			'portfolio_meta_description'    => 'Découvrez nos réalisations de tapisserie à Montpellier : fauteuils, chaises et canapés restaurés, cannage, rempaillage et réfection complète.',
+			'redirect_archive_to_portfolio' => '1',
 			'contact_url'                => home_url( '/contact/' ),
 			'phone'                      => '04 11 93 96 29',
 			'whatsapp'                   => '',
 			'accent_color'               => '#9b6b43',
-			'rank_math_schema'           => '0',
+			'rank_math_schema'           => '1',
 			'image_schema'               => '1',
 			'archive_layout'             => 'masonry',
 			'archive_columns'            => '3',
@@ -165,7 +182,8 @@ final class KV2PS_Plugin {
 	public function enqueue_frontend_assets() {
 		global $post;
 		$has_shortcode = is_singular() && $post instanceof WP_Post && has_shortcode( $post->post_content, 'kv2_portfolio' );
-		if ( is_singular( KV2PS_Post_Types::POST_TYPE ) || is_post_type_archive( KV2PS_Post_Types::POST_TYPE ) || is_tax( KV2PS_Post_Types::taxonomies() ) || $has_shortcode ) {
+		$primary_page  = KV2PS_SEO::is_primary_portfolio_page();
+		if ( is_singular( KV2PS_Post_Types::POST_TYPE ) || is_post_type_archive( KV2PS_Post_Types::POST_TYPE ) || is_tax( KV2PS_Post_Types::taxonomies() ) || $has_shortcode || $primary_page ) {
 			$this->enqueue_styles();
 		}
 	}
@@ -258,9 +276,12 @@ final class KV2PS_Plugin {
 			array_merge(
 				$defaults,
 				array(
-				'preset'       => $preset,
-				'service'    => '',
-				'ville'      => '',
+					'preset'       => $preset,
+					'service'      => '',
+					'ville'        => '',
+					'show_heading' => 'auto',
+					'heading'      => '',
+					'intro'        => '',
 				)
 			),
 			$atts,
@@ -303,8 +324,23 @@ final class KV2PS_Plugin {
 		$query   = new WP_Query( $args );
 		$display = self::sanitize_display_settings( $atts );
 		$key     = 'shortcode-' . substr( md5( wp_json_encode( array_diff_key( $atts, array( 'kv2ps_page' => '' ) ) ) ), 0, 10 );
+		$heading_mode = strtolower( trim( (string) $atts['show_heading'] ) );
+		$show_heading = 'auto' === $heading_mode
+			? KV2PS_SEO::is_primary_portfolio_page() && ! KV2PS_SEO::page_has_h1()
+			: self::enabled( $heading_mode );
+		$heading      = trim( sanitize_text_field( $atts['heading'] ) );
+		$heading      = $heading ?: trim( (string) $settings['archive_title'] );
+		$intro        = trim( wp_kses_post( $atts['intro'] ) );
+		$intro        = $intro ?: trim( (string) $settings['archive_intro'] );
 
 		ob_start();
+		if ( $show_heading && $heading ) {
+			echo '<header class="kv2ps-shortcode-header"><div class="kv2ps-eyebrow">' . esc_html__( 'Portfolio', 'kv2-portfolio-studio' ) . '</div><h1>' . esc_html( $heading ) . '</h1>';
+			if ( $intro ) {
+				echo '<div class="kv2ps-lead">' . wp_kses_post( wpautop( $intro ) ) . '</div>';
+			}
+			echo '</header>';
+		}
 		if ( $query->have_posts() ) {
 			$next_url = $paged < (int) $query->max_num_pages ? add_query_arg( 'kv2ps_page', $paged + 1 ) : '';
 			echo '<section class="kv2ps-collection" data-collection-key="' . esc_attr( $key ) . '" data-load-mode="' . esc_attr( $display['load_mode'] ) . '">';
