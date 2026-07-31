@@ -334,21 +334,22 @@
   box-shadow: 0 16px 40px rgba(32, 29, 26, 0.09);
 }
 .kv2ps-card-style-classic .kv2ps-card {
+  background: transparent;
   border: 0;
-  box-shadow: 0 7px 24px rgba(32, 29, 26, 0.08);
-  overflow: hidden;
+  box-shadow: none;
+  overflow: visible;
 }
 .kv2ps-card-style-classic .kv2ps-card__body {
-  background: #fff;
-  padding: 14px 12px 15px;
+  background: transparent;
+  padding: 10px 4px 0;
 }
 .kv2ps-card-style-classic .kv2ps-card__body .kv2ps-eyebrow,
 .kv2ps-card-style-classic .kv2ps-card__body > p {
   display: none;
 }
 .kv2ps-card-style-classic .kv2ps-card__title {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   line-height: 1.4;
   margin: 0;
   text-align: center;
@@ -391,18 +392,23 @@
   display: block;
   overflow: hidden;
 }
+.kv2ps-card-style-classic .kv2ps-card__image {
+  box-shadow: 0 0 13px rgba(0, 0, 0, 0.11);
+}
 .kv2ps-card__image img {
   aspect-ratio: 4/3;
-  contain: none;
+  contain: none !important;
+  contain-intrinsic-size: none !important;
   display: block;
-  height: auto;
+  height: auto !important;
+  max-height: none !important;
   object-fit: cover;
   transition: transform 0.35s ease;
   width: 100%;
 }
 .kv2ps-ratio-auto .kv2ps-card__image img {
-  aspect-ratio: auto;
-  object-fit: cover;
+  aspect-ratio: auto !important;
+  object-fit: contain;
 }
 .kv2ps-ratio-1-1 .kv2ps-card__image img,
 .kv2ps-ratio-1-1 .kv2ps-card__placeholder {
@@ -424,7 +430,7 @@
 }
 .kv2ps-layout-masonry {
   display: block;
-  column-gap: 32px;
+  column-gap: 40px;
 }
 .kv2ps-layout-masonry.kv2ps-cols-2 {
   column-count: 2;
@@ -438,7 +444,7 @@
 .kv2ps-layout-masonry .kv2ps-card {
   break-inside: avoid;
   display: inline-block;
-  margin: 0 0 32px;
+  margin: 0 0 50px;
   width: 100%;
 }
 .kv2ps-js .kv2ps-layout-masonry.kv2ps-masonry-ready {
