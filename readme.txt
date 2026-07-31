@@ -3,7 +3,7 @@ Contributors: kv2
 Tags: portfolio, seo, image metadata, exif, rank math
 Requires at least: 6.5
 Requires PHP: 7.4
-Stable tag: 1.1.5
+Stable tag: 1.1.6
 License: Proprietary
 
 Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonnées d’images avec ChatGPT.
@@ -20,6 +20,13 @@ Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonné
 Le plugin ne supprime aucune donnée à la désinstallation. Le module EXIF lit le fichier original mais ne le réécrit pas dans la version 1.1.
 
 == Changelog ==
+
+= 1.1.6 =
+* Enrichit le CTA global et les fiches avec téléphone cliquable, parcours client et points forts.
+* Ajoute un bouton WhatsApp vert piloté par Click to Chat, préréglé sur l’encart de bienvenue.
+* Intègre le statut et la synthèse des horaires du plugin We’re Open! lorsqu’il est actif.
+* Uniformise l’archive « Toutes les réalisations » en Masonry classique, trois colonnes maximum.
+* Permet de choisir la page principale ciblée par le lien « Toutes les réalisations ».
 
 = 1.1.5 =
 * Ajoute un espace de respiration de 30 px sous le CTA des fiches de réalisation.
