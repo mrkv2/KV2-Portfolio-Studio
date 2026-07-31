@@ -131,7 +131,7 @@ final class KV2PS_Importer {
 		return $result;
 	}
 
-	private static function find_source_image_id( $source_id ) {
+	public static function find_source_image_id( $source_id ) {
 		$thumbnail_id = get_post_thumbnail_id( $source_id );
 		if ( $thumbnail_id ) {
 			return (int) $thumbnail_id;
@@ -147,6 +147,35 @@ final class KV2PS_Importer {
 		}
 
 		return 0;
+	}
+
+	public static function maybe_repair_missing_thumbnails() {
+		if ( ! current_user_can( 'manage_options' ) || KV2PS_VERSION === get_option( 'kv2ps_thumbnail_repair_version' ) ) {
+			return;
+		}
+
+		$imported_ids = get_posts(
+			array(
+				'post_type'      => KV2PS_Post_Types::POST_TYPE,
+				'post_status'    => 'any',
+				'posts_per_page' => 500,
+				'fields'         => 'ids',
+				'meta_key'       => '_kv2ps_source_wp_portfolio_id',
+			)
+		);
+
+		foreach ( $imported_ids as $post_id ) {
+			if ( get_post_thumbnail_id( $post_id ) ) {
+				continue;
+			}
+			$source_id = absint( get_post_meta( $post_id, '_kv2ps_source_wp_portfolio_id', true ) );
+			$image_id  = $source_id ? self::find_source_image_id( $source_id ) : 0;
+			if ( $image_id ) {
+				set_post_thumbnail( $post_id, $image_id );
+			}
+		}
+
+		update_option( 'kv2ps_thumbnail_repair_version', KV2PS_VERSION );
 	}
 
 	private static function find_attachment_in_value( $value ) {
@@ -168,9 +197,25 @@ final class KV2PS_Importer {
 		}
 
 		if ( is_string( $value ) && filter_var( $value, FILTER_VALIDATE_URL ) ) {
-			$attachment_id = attachment_url_to_postid( esc_url_raw( $value ) );
+			$attachment_id = attachment_url_to_postid( esc_url_raw( strtok( $value, '?' ) ) );
 			if ( $attachment_id && 0 === strpos( (string) get_post_mime_type( $attachment_id ), 'image/' ) ) {
 				return $attachment_id;
+			}
+		}
+
+		if ( is_string( $value ) && preg_match( '/wp-image-(\d+)/', $value, $matches ) ) {
+			$attachment_id = absint( $matches[1] );
+			if ( $attachment_id && 0 === strpos( (string) get_post_mime_type( $attachment_id ), 'image/' ) ) {
+				return $attachment_id;
+			}
+		}
+
+		if ( is_string( $value ) && preg_match_all( '#https?://[^\s"\'<>]+#i', $value, $matches ) ) {
+			foreach ( $matches[0] as $url ) {
+				$attachment_id = attachment_url_to_postid( esc_url_raw( strtok( html_entity_decode( $url ), '?' ) ) );
+				if ( $attachment_id && 0 === strpos( (string) get_post_mime_type( $attachment_id ), 'image/' ) ) {
+					return $attachment_id;
+				}
 			}
 		}
 

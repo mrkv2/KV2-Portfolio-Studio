@@ -1,4 +1,4 @@
-# KV2 Portfolio Studio 1.1.0
+# KV2 Portfolio Studio 1.1.1
 
 Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio sans sacrifier le référencement ni les données existantes.
 
@@ -23,12 +23,12 @@ Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio 
 ## Installation
 
 1. Dans WordPress, ouvrir **Extensions → Ajouter une extension → Téléverser une extension**.
-2. Choisir `kv2-portfolio-studio-v1.1.0.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
+2. Choisir `kv2-portfolio-studio-v1.1.1.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
 3. Ouvrir **Réalisations → Réglages** et configurer l’affichage, Click to Chat, l’URL du formulaire et les droits des images.
 4. Dans Rank Math, vérifier que « Réalisations » et les taxonomies utiles sont incluses au sitemap. Laisser les archives pauvres en contenu en `noindex` jusqu’à ce qu’elles aient une description et plusieurs projets.
 5. Publier un projet test, puis contrôler l’affichage, le canonical et le JSON-LD avec Rich Snippet Sniper.
 
-L’archive est disponible par défaut à `/realisations/`. Le shortcode `[kv2_portfolio]` insère le rendu classique complet dans une page existante, CTA compris. Filtres et affichages peuvent être combinés :
+L’archive est disponible par défaut à `/realisations/`. Le shortcode `[kv2_portfolio]` impose le rendu classique complet dans une page existante, CTA compris, même si une ancienne installation conserve d’autres réglages. Utilisez `[kv2_portfolio preset="settings"]` uniquement pour reprendre les choix de l’écran Réglages. Filtres et affichages peuvent être combinés :
 
 `[kv2_portfolio service="restauration-fauteuil" ville="montpellier" layout="masonry" columns="2" image_ratio="auto" card_style="minimal" load_mode="button"]`
 

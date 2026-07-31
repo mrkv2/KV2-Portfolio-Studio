@@ -7,6 +7,7 @@ final class KV2PS_Admin {
 		KV2PS_Completeness::init();
 		add_action( 'admin_menu', array( __CLASS__, 'admin_menu' ) );
 		add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
+		add_action( 'admin_init', array( 'KV2PS_Importer', 'maybe_repair_missing_thumbnails' ), 20 );
 		add_action( 'add_meta_boxes_' . KV2PS_Post_Types::POST_TYPE, array( __CLASS__, 'add_meta_boxes' ) );
 		add_action( 'save_post_' . KV2PS_Post_Types::POST_TYPE, array( __CLASS__, 'save_realisation' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_assets' ) );

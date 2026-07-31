@@ -2,7 +2,7 @@
 /**
  * Plugin Name: KV2 Portfolio Studio
  * Description: Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonnées d’images avec ChatGPT.
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: KV2 – Agence Digitale 360°
  * Text Domain: kv2-portfolio-studio
  * Requires at least: 6.5
@@ -12,7 +12,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'KV2PS_VERSION', '1.1.0' );
+define( 'KV2PS_VERSION', '1.1.1' );
 define( 'KV2PS_FILE', __FILE__ );
 define( 'KV2PS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'KV2PS_URL', plugin_dir_url( __FILE__ ) );

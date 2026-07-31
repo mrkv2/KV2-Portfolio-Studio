@@ -206,19 +206,39 @@ final class KV2PS_Plugin {
 	public function portfolio_shortcode( $atts ) {
 		$this->enqueue_styles();
 		$settings = self::settings();
-		$atts = shortcode_atts(
-			array(
-				'limit'      => $settings['archive_posts_per_page'],
-				'columns'    => $settings['archive_columns'],
-				'layout'     => $settings['archive_layout'],
-				'image_ratio' => $settings['archive_image_ratio'],
-				'card_style' => $settings['archive_card_style'],
-				'load_mode'  => $settings['archive_load_mode'],
-				'service'    => '',
-				'ville'      => '',
+		$atts     = is_array( $atts ) ? $atts : array();
+		$preset   = isset( $atts['preset'] ) ? sanitize_key( $atts['preset'] ) : 'classic';
+		$defaults = 'settings' === $preset
+			? array(
+				'limit'        => $settings['archive_posts_per_page'],
+				'columns'      => $settings['archive_columns'],
+				'layout'       => $settings['archive_layout'],
+				'image_ratio'  => $settings['archive_image_ratio'],
+				'card_style'   => $settings['archive_card_style'],
+				'load_mode'    => $settings['archive_load_mode'],
 				'show_filters' => $settings['archive_show_filters'],
 				'show_search'  => $settings['archive_show_search'],
 				'show_cta'     => $settings['archive_show_cta'],
+			)
+			: array(
+				'limit'        => '12',
+				'columns'      => '3',
+				'layout'       => 'masonry',
+				'image_ratio'  => 'auto',
+				'card_style'   => 'classic',
+				'load_mode'    => 'button',
+				'show_filters' => '1',
+				'show_search'  => '1',
+				'show_cta'     => '1',
+			);
+		$atts = shortcode_atts(
+			array_merge(
+				$defaults,
+				array(
+				'preset'       => $preset,
+				'service'    => '',
+				'ville'      => '',
+				)
 			),
 			$atts,
 			'kv2_portfolio'
@@ -454,17 +474,28 @@ final class KV2PS_Plugin {
 	}
 
 	public function render_card() {
+		$post_id       = get_the_ID();
 		$service_terms = get_the_terms( get_the_ID(), 'kv2_service' );
 		$service_terms = is_wp_error( $service_terms ) ? array() : (array) $service_terms;
 		$terms         = get_the_term_list( get_the_ID(), 'kv2_service', '', ', ' );
 		$service_slugs = implode( ' ', wp_list_pluck( $service_terms, 'slug' ) );
 		$search_text   = implode( ' ', array( get_the_title(), get_the_excerpt(), wp_strip_all_tags( $terms ) ) );
+		$image_id      = get_post_thumbnail_id( $post_id );
+		if ( ! $image_id ) {
+			$after_ids  = KV2PS_Post_Types::sanitize_ids( get_post_meta( $post_id, '_kv2ps_after_images', true ) );
+			$before_ids = KV2PS_Post_Types::sanitize_ids( get_post_meta( $post_id, '_kv2ps_before_images', true ) );
+			$image_id   = $after_ids ? reset( $after_ids ) : ( $before_ids ? reset( $before_ids ) : 0 );
+		}
+		if ( ! $image_id ) {
+			$source_id = absint( get_post_meta( $post_id, '_kv2ps_source_wp_portfolio_id', true ) );
+			$image_id  = $source_id ? KV2PS_Importer::find_source_image_id( $source_id ) : 0;
+		}
 		?>
 		<article <?php post_class( 'kv2ps-card' ); ?> data-kv2ps-services="<?php echo esc_attr( $service_slugs ); ?>" data-kv2ps-search="<?php echo esc_attr( remove_accents( strtolower( $search_text ) ) ); ?>">
 			<a class="kv2ps-card__image" href="<?php the_permalink(); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Voir la réalisation : %s', 'kv2-portfolio-studio' ), get_the_title() ) ); ?>">
 				<?php
-				if ( has_post_thumbnail() ) {
-					the_post_thumbnail( 'large', array( 'loading' => 'lazy', 'decoding' => 'async' ) );
+				if ( $image_id ) {
+					echo wp_get_attachment_image( $image_id, 'large', false, array( 'loading' => 'lazy', 'decoding' => 'async' ) );
 				} else {
 					echo '<span class="kv2ps-card__placeholder" aria-hidden="true"></span>';
 				}

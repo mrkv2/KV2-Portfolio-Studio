@@ -2,14 +2,14 @@
   "schema_version": "1.0",
   "source": {
     "generator": "ChatGPT",
-    "generated_at": "2026-07-31T12:00:00Z",
+    "generated_at": "2000-01-01T00:00:00Z",
     "project": "Fauteuil bridge retapissé à Ville Exemple",
     "site": "https://example.com/"
   },
   "images": [
     {
       "match": {
-        "attachment_id": 123,
+        "attachment_id": null,
         "filename": "fauteuil-bridge-apres.jpg"
       },
       "fields": {
@@ -29,7 +29,7 @@
           "region": "Région Exemple",
           "country": "FR"
         },
-        "date_created": "2026-07-31",
+        "date_created": "",
         "license_url": "",
         "acquire_license_url": ""
       },

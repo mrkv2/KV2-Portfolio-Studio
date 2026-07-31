@@ -3,7 +3,7 @@ Contributors: kv2
 Tags: portfolio, seo, image metadata, exif, rank math
 Requires at least: 6.5
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: Proprietary
 
 Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonnées d’images avec ChatGPT.
@@ -20,6 +20,10 @@ Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonné
 Le plugin ne supprime aucune donnée à la désinstallation. Le module EXIF lit le fichier original mais ne le réécrit pas dans la version 1.1.
 
 == Changelog ==
+
+= 1.1.1 =
+* Le shortcode simple applique toujours le préréglage Portfolio classique, indépendamment des anciens réglages enregistrés.
+* Réparation automatique des images importées manquantes et meilleure reconnaissance des URL WP Portfolio.
 
 = 1.1.0 =
 * CTA intelligent avec Click to Chat et formulaire.

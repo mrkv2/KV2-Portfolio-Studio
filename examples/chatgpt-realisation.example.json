@@ -2,14 +2,14 @@
   "schema_version": "1.1",
   "source": {
     "generator": "ChatGPT",
-    "generated_at": "2026-07-31T15:00:00Z",
+    "generated_at": "2000-01-01T00:00:00Z",
     "site": "https://example.com/",
     "status_policy": "draft_only"
   },
   "project": {
     "match": {
       "realisation_id": null,
-      "source_reference": "Message client du 31 juillet 2026"
+      "source_reference": "EXEMPLE-FICTIF"
     },
     "fields": {
       "title": "Restauration d’un fauteuil bridge à Ville Exemple",
@@ -24,7 +24,7 @@
       "duration": "3 semaines",
       "work_type": "Restauration",
       "price_range": "",
-      "project_date": "2026-07-31",
+      "project_date": "",
       "confidential": false
     },
     "testimonial": {
@@ -64,7 +64,7 @@
     "images": [
       {
         "match": {
-          "attachment_id": 123,
+          "attachment_id": null,
           "filename": "fauteuil-bridge-apres.jpg",
           "source_url": "https://example.com/wp-content/uploads/2026/07/fauteuil-bridge-apres.jpg"
         },
@@ -83,7 +83,7 @@
             "region": "Région Exemple",
             "country": "FR"
           },
-          "date_created": "2026-07-31",
+          "date_created": "",
           "license_url": "",
           "acquire_license_url": ""
         },
