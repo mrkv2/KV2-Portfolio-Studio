@@ -23,6 +23,12 @@ function register_deactivation_hook() {}
 function is_admin() {
 	return false;
 }
+function home_url( $path = '/' ) {
+	return 'https://example.test' . $path;
+}
+function get_bloginfo( $key ) {
+	return 'name' === $key ? 'Atelier Exemple' : '';
+}
 function get_option( $key, $default = false ) {
 	return array_key_exists( $key, $GLOBALS['kv2ps_test_options'] ) ? $GLOBALS['kv2ps_test_options'][ $key ] : $default;
 }
@@ -53,6 +59,9 @@ KV2PS_Plugin::instance()->maybe_upgrade();
 $migrated = $GLOBALS['kv2ps_test_options']['kv2ps_settings'];
 if ( 'masonry' !== $migrated['archive_layout'] || '3' !== $migrated['archive_columns'] || 'classic' !== $migrated['archive_card_style'] || 'button' !== $migrated['archive_load_mode'] ) {
 	throw new RuntimeException( 'Legacy display defaults were not migrated to the classic portfolio preset.' );
+}
+if ( '04 11 93 96 29' !== $migrated['phone'] || 'ctc_greetings' !== $migrated['ctc_trigger'] || empty( $migrated['cta_process_steps'] ) || empty( $migrated['portfolio_page_url'] ) ) {
+	throw new RuntimeException( 'Enhanced CTA defaults were not migrated.' );
 }
 
 $GLOBALS['kv2ps_test_options'] = array(
