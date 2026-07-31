@@ -1,4 +1,4 @@
-# KV2 Portfolio Studio 1.1.5
+# KV2 Portfolio Studio 1.1.6
 
 Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio sans sacrifier le référencement ni les données existantes.
 
@@ -9,6 +9,7 @@ Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio 
 - ajoute une trame éditoriale complète : besoin, état initial, contraintes, intervention, résultat, matières, durée, prix facultatif et témoignage sourcé ;
 - gère les photos avant/après en colonnes ou dans un comparateur accessible ;
 - propose des CTA globaux ou propres à une réalisation, avec déclenchement Click to Chat et lien vers le formulaire ;
+- enrichit ces CTA avec téléphone cliquable, parcours client, points forts et horaires dynamiques We’re Open! lorsque l’extension est active ;
 - propose trois affichages — grille, tuiles éditoriales et Masonry — avec colonnes, format d’image, style de carte et quantité configurables ;
 - reprend par défaut le rendu WP Portfolio classique : Masonry fluide en trois colonnes, proportions originales, titres sous les images, filtres de services, recherche à droite et bouton « Voir plus de réalisations » ;
 - conserve une pagination HTML explorée par les moteurs, même lorsque l’UX utilise « Afficher plus » ou le défilement infini ;
@@ -23,7 +24,7 @@ Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio 
 ## Installation
 
 1. Dans WordPress, ouvrir **Extensions → Ajouter une extension → Téléverser une extension**.
-2. Choisir `kv2-portfolio-studio-v1.1.5.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
+2. Choisir `kv2-portfolio-studio-v1.1.6.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
 3. Ouvrir **Réalisations → Réglages** et configurer l’affichage, Click to Chat, l’URL du formulaire et les droits des images.
 4. Dans Rank Math, vérifier que « Réalisations » et les taxonomies utiles sont incluses au sitemap. Laisser les archives pauvres en contenu en `noindex` jusqu’à ce qu’elles aient une description et plusieurs projets.
 5. Publier un projet test, puis contrôler l’affichage, le canonical et le JSON-LD avec Rich Snippet Sniper.
@@ -45,9 +46,12 @@ Ouvrir **Réalisations → Importer WP Portfolio**, sélectionner quelques élé
 Dans **Réalisations → Réglages**, choisir :
 
 - le titre et le texte par défaut ;
+- le téléphone affiché, le parcours en plusieurs étapes et les points forts ;
 - l’action principale : Click to Chat ou formulaire ;
 - `ctc_chat` pour ouvrir directement WhatsApp, ou `ctc_greetings` pour ouvrir l’encart de bienvenue ;
 - l’adresse du formulaire et les libellés des deux boutons.
+
+Lorsque We’re Open! est actif, le CTA peut afficher automatiquement la pastille ouvert/fermé, l’heure de prochaine réponse et une synthèse des horaires. Le contrôle immédiat évite de servir un statut périmé depuis le cache. Le lien « Toutes les réalisations » peut être raccordé à la page principale contenant le shortcode ; l’archive native conserve dans tous les cas le rendu Masonry classique en trois colonnes maximum.
 
 Une réalisation peut remplacer ces réglages dans son bloc « CTA de cette réalisation ». Les classes officielles Click to Chat restent sur les boutons, ce qui permet au plugin Click to Chat de conserver ses réglages et son suivi Analytics.
 
