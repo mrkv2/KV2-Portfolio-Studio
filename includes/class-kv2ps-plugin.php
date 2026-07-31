@@ -495,7 +495,20 @@ final class KV2PS_Plugin {
 			<a class="kv2ps-card__image" href="<?php the_permalink(); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Voir la réalisation : %s', 'kv2-portfolio-studio' ), get_the_title() ) ); ?>">
 				<?php
 				if ( $image_id ) {
-					echo wp_get_attachment_image( $image_id, 'large', false, array( 'loading' => 'lazy', 'decoding' => 'async' ) );
+					$image_html = wp_get_attachment_image(
+						$image_id,
+						'large',
+						false,
+						array(
+							'loading'  => 'lazy',
+							'decoding' => 'async',
+							'sizes'    => '(max-width: 620px) calc(100vw - 36px), (max-width: 900px) calc(50vw - 34px), 372px',
+						)
+					);
+					/* WordPress 6.7+ prefixes lazy images with `auto`, which can
+					 * reserve a 3000 x 1500 placeholder and break masonry measures. */
+					$image_html = str_replace( 'sizes="auto, ', 'sizes="', $image_html );
+					echo wp_kses_post( $image_html );
 				} else {
 					echo '<span class="kv2ps-card__placeholder" aria-hidden="true"></span>';
 				}
