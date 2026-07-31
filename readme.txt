@@ -3,7 +3,7 @@ Contributors: kv2
 Tags: portfolio, seo, image metadata, exif, rank math
 Requires at least: 6.5
 Requires PHP: 7.4
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 License: Proprietary
 
 Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonnées d’images avec ChatGPT.
@@ -20,6 +20,11 @@ Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonné
 Le plugin ne supprime aucune donnée à la désinstallation. Le module EXIF lit le fichier original mais ne le réécrit pas dans la version 1.1.
 
 == Changelog ==
+
+= 1.1.3 =
+* Neutralise à la source le préfixe `sizes="auto"` ajouté par WordPress aux images différées.
+* Rétablit un vrai Masonry en rangées visuelles compactes après chargement des ratios fiables.
+* Reproduit le style WP Portfolio : ombre sur l’image seule et titre directement sur le fond de page.
 
 = 1.1.2 =
 * Corrige les images étirées par le placeholder natif des images différées de WordPress.
