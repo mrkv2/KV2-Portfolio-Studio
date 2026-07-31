@@ -337,49 +337,220 @@
   transform: translateX(3px);
 }
 .kv2ps-cta {
-  background: var(--kv2ps-ink);
+  background: linear-gradient(135deg, #201d1a 0%, #2d2824 100%);
   color: #fff;
-  padding-block: 50px;
+  padding-block: clamp(52px, 7vw, 78px);
 }
 .single-kv2_realisation .kv2ps-cta {
   margin-bottom: 30px;
 }
-.kv2ps-cta .kv2ps-container {
-  align-items: center;
-  display: flex;
-  gap: 30px;
-  justify-content: space-between;
+.kv2ps-cta__container {
+  align-items: start;
+  display: grid;
+  gap: 26px clamp(34px, 5vw, 68px);
+  grid-template-areas:
+    "copy conversion"
+    "process conversion";
+  grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.92fr);
 }
 .kv2ps-cta__copy {
-  max-width: 650px;
-}
-.kv2ps-cta__actions {
-  align-items: flex-start;
-  display: flex;
-  flex: 0 0 min(100%, 410px);
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.kv2ps-cta__form-note {
-  color: rgba(255, 255, 255, 0.78);
-  flex-basis: 100%;
-  line-height: 1.45;
+  grid-area: copy;
 }
 .kv2ps-cta h2 {
   color: inherit;
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  letter-spacing: -0.035em;
+  line-height: 1.1;
   margin: 0;
 }
-.kv2ps-button {
-  background: var(--kv2ps-accent);
-  color: #fff !important;
-  display: inline-block;
+.kv2ps-cta h3 {
+  color: inherit;
+  font-size: 1.15rem;
+  margin: 0 0 18px;
+}
+.kv2ps-cta__intro {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1.05rem;
+  line-height: 1.65;
+  margin: 16px 0 22px;
+  max-width: 62ch;
+}
+.kv2ps-cta__phone {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 13px;
+  margin: 0 0 20px;
+}
+.kv2ps-cta__phone span {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
   font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.kv2ps-cta__phone a {
+  color: #fff;
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+  font-weight: 750;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+.kv2ps-cta__opening {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  max-width: 610px;
+  padding: 15px 17px;
+}
+.kv2ps-cta__availability {
+  align-items: flex-start;
+  display: flex;
+  gap: 11px;
+}
+.kv2ps-cta__availability strong,
+.kv2ps-cta__availability small {
+  display: block;
+}
+.kv2ps-cta__availability small {
+  color: rgba(255, 255, 255, 0.74);
+  line-height: 1.45;
+  margin-top: 2px;
+}
+.kv2ps-cta__status-dot {
+  background: #e86b68;
+  border: 3px solid rgba(232, 107, 104, 0.23);
+  border-radius: 50%;
+  box-sizing: content-box;
+  flex: 0 0 9px;
+  height: 9px;
+  margin-top: 4px;
+}
+.kv2ps-cta__availability--open .kv2ps-cta__status-dot {
+  background: #38d276;
+  border-color: rgba(56, 210, 118, 0.23);
+  box-shadow: 0 0 0 4px rgba(56, 210, 118, 0.08);
+}
+.kv2ps-cta__hours {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  display: grid;
+  font-size: 0.82rem;
+  gap: 8px;
+  grid-template-columns: auto 1fr;
+  line-height: 1.5;
+  margin-top: 13px;
+  padding-top: 12px;
+}
+.kv2ps-cta__hours > strong {
+  color: rgba(255, 255, 255, 0.68);
+  text-transform: uppercase;
+}
+.kv2ps-cta__hours .opening-hours {
+  color: #fff;
+}
+.kv2ps-cta__process {
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  grid-area: process;
+  padding: clamp(20px, 3vw, 28px);
+}
+.kv2ps-cta__process ol {
+  display: grid;
+  gap: 11px;
+  margin: 0;
+  padding-left: 1.35rem;
+}
+.kv2ps-cta__process li {
+  color: rgba(255, 255, 255, 0.86);
+  line-height: 1.5;
+  padding-left: 5px;
+}
+.kv2ps-cta__process li::marker {
+  color: #d9ad83;
+  font-weight: 800;
+}
+.kv2ps-cta__conversion {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.18);
+  color: var(--kv2ps-ink);
+  grid-area: conversion;
+  padding: clamp(24px, 4vw, 38px);
+}
+.kv2ps-cta__benefits {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 0 0 28px;
+  padding: 0;
+}
+.kv2ps-cta__benefits li {
+  align-items: center;
+  display: flex;
+  font-weight: 650;
+  gap: 10px;
+  line-height: 1.4;
+}
+.kv2ps-cta__benefits li span {
+  align-items: center;
+  background: rgba(155, 107, 67, 0.12);
+  border-radius: 50%;
+  color: var(--kv2ps-accent);
+  display: inline-flex;
+  flex: 0 0 28px;
+  height: 28px;
+  justify-content: center;
+}
+.kv2ps-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.kv2ps-cta__form-note {
+  color: #68615b;
+  flex-basis: 100%;
+  line-height: 1.45;
+  margin-top: 3px;
+}
+.kv2ps-button {
+  align-items: center;
+  background: var(--kv2ps-accent);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  box-sizing: border-box;
+  color: #fff !important;
+  display: inline-flex;
+  gap: 9px;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 50px;
   padding: 14px 22px;
   text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 .kv2ps-button--secondary {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-color: #cfc7bf;
+  color: var(--kv2ps-ink) !important;
+}
+.kv2ps-button--whatsapp,
+.kv2ps-button--secondary.kv2ps-button--whatsapp {
+  background: #25d366;
+  border-color: #25d366;
+  color: #0b2917 !important;
+}
+.kv2ps-button--whatsapp:hover,
+.kv2ps-button--whatsapp:focus-visible {
+  background: #20bd5a;
+  border-color: #20bd5a;
+}
+.kv2ps-button:hover {
+  transform: translateY(-1px);
+}
+.kv2ps-button__icon {
+  flex: 0 0 20px;
+  height: 20px;
+  width: 20px;
 }
 .kv2ps-button:focus-visible,
 .kv2ps-load-more:focus-visible,
@@ -710,9 +881,12 @@
     align-items: flex-start;
     flex-direction: column;
   }
-  .kv2ps-cta .kv2ps-container {
-    align-items: flex-start;
-    flex-direction: column;
+  .kv2ps-cta__container {
+    grid-template-areas:
+      "copy"
+      "process"
+      "conversion";
+    grid-template-columns: 1fr;
   }
   .kv2ps-layout-masonry.kv2ps-cols-3,
   .kv2ps-layout-masonry.kv2ps-cols-4 {
@@ -775,13 +949,17 @@
     grid-column: auto;
   }
   .kv2ps-cta__actions {
-    flex-basis: auto;
     width: 100%;
   }
   .kv2ps-cta__actions .kv2ps-button {
-    box-sizing: border-box;
     text-align: center;
     width: 100%;
+  }
+  .kv2ps-cta__hours {
+    grid-template-columns: 1fr;
+  }
+  .kv2ps-cta__conversion {
+    padding: 22px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
