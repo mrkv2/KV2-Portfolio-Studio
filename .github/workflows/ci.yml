@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['7.4', '8.3']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+      - name: PHP syntax
+        run: find . -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Bootstrap and migration
+        run: php tests/smoke-bootstrap.php
+      - name: Package contract
+        run: php tests/validate-package.php
+      - name: Security contract
+        run: php tests/security-contract.php
+      - name: SEO contract
+        run: php tests/seo-contract.php

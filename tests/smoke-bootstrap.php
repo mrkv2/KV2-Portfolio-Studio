@@ -63,6 +63,12 @@ if ( 'masonry' !== $migrated['archive_layout'] || '3' !== $migrated['archive_col
 if ( '04 11 93 96 29' !== $migrated['phone'] || 'ctc_greetings' !== $migrated['ctc_trigger'] || empty( $migrated['cta_process_steps'] ) || empty( $migrated['portfolio_page_url'] ) ) {
 	throw new RuntimeException( 'Enhanced CTA defaults were not migrated.' );
 }
+if ( empty( $migrated['portfolio_seo_title'] ) || empty( $migrated['portfolio_meta_description'] ) || '1' !== $migrated['redirect_archive_to_portfolio'] || '1' !== $migrated['rank_math_schema'] ) {
+	throw new RuntimeException( 'SEO 1.1.7 defaults were not migrated.' );
+}
+if ( '1.1.7' !== $GLOBALS['kv2ps_test_options']['kv2ps_version'] ) {
+	throw new RuntimeException( 'Installed version was not upgraded to 1.1.7.' );
+}
 
 $GLOBALS['kv2ps_test_options'] = array(
 	'kv2ps_version'  => '1.0.0',

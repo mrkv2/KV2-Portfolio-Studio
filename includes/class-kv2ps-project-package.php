@@ -69,19 +69,10 @@ final class KV2PS_Project_Package {
 
 	private static function read_submitted_json() {
 		$json = isset( $_POST['kv2ps_project_json'] ) ? trim( wp_unslash( $_POST['kv2ps_project_json'] ) ) : '';
-		if ( ! empty( $_FILES['kv2ps_project_json_file']['tmp_name'] ) ) {
-			$file = $_FILES['kv2ps_project_json_file'];
-			if ( ! empty( $file['error'] ) || $file['size'] > 2097152 || 'json' !== strtolower( pathinfo( sanitize_file_name( $file['name'] ), PATHINFO_EXTENSION ) ) ) {
-				return new WP_Error( 'invalid_file', __( 'Le fichier doit être un JSON valide de moins de 2 Mo.', 'kv2-portfolio-studio' ) );
-			}
-			$json = file_get_contents( $file['tmp_name'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-		}
-		if ( ! $json ) {
-			return new WP_Error( 'empty_json', __( 'Ajoutez le fichier JSON complété par ChatGPT.', 'kv2-portfolio-studio' ) );
-		}
-		$data = json_decode( $json, true );
-		if ( JSON_ERROR_NONE !== json_last_error() || ! is_array( $data ) ) {
-			return new WP_Error( 'bad_json', sprintf( __( 'JSON illisible : %s', 'kv2-portfolio-studio' ), json_last_error_msg() ) );
+		$file = isset( $_FILES['kv2ps_project_json_file'] ) && is_array( $_FILES['kv2ps_project_json_file'] ) ? $_FILES['kv2ps_project_json_file'] : array();
+		$data = KV2PS_JSON::read( $json, $file, 2097152 );
+		if ( is_wp_error( $data ) ) {
+			return $data;
 		}
 		if ( '1.1' !== (string) ( isset( $data['schema_version'] ) ? $data['schema_version'] : '' ) || empty( $data['project'] ) || ! is_array( $data['project'] ) ) {
 			return new WP_Error( 'bad_schema', __( 'Le dossier doit utiliser schema_version 1.1 et contenir project.', 'kv2-portfolio-studio' ) );

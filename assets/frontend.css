@@ -60,6 +60,23 @@
   line-height: 1.6;
   max-width: 62ch;
 }
+.kv2ps-shortcode-header {
+  box-sizing: border-box;
+  margin: 0 0 clamp(30px, 4vw, 48px);
+  padding: clamp(8px, 2vw, 20px) 0 0;
+  width: 100%;
+}
+.kv2ps-shortcode-header h1 {
+  color: var(--kv2ps-ink);
+  font-size: clamp(1.9rem, 3.2vw, 2.75rem);
+  letter-spacing: -0.03em;
+  line-height: 1.14;
+  margin: 0.22em 0 0;
+  overflow-wrap: anywhere;
+}
+.kv2ps-shortcode-header .kv2ps-lead {
+  margin: 14px 0 0;
+}
 .kv2ps-hero__media {
   margin: 0;
 }
