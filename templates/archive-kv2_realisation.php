@@ -19,10 +19,10 @@ $intro    = $is_term ? term_description() : ( ! empty( $settings['archive_intro'
 			<?php
 			$display = KV2PS_Plugin::sanitize_display_settings(
 				array(
-					'layout'      => $settings['archive_layout'],
-					'columns'     => $settings['archive_columns'],
-					'image_ratio' => $settings['archive_image_ratio'],
-					'card_style'  => $settings['archive_card_style'],
+					'layout'      => 'masonry',
+					'columns'     => '3',
+					'image_ratio' => 'auto',
+					'card_style'  => 'classic',
 					'load_mode'   => $settings['archive_load_mode'],
 				)
 			);
