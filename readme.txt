@@ -3,7 +3,7 @@ Contributors: kv2
 Tags: portfolio, seo, image metadata, exif, rank math
 Requires at least: 6.5
 Requires PHP: 7.4
-Stable tag: 1.1.4
+Stable tag: 1.1.5
 License: Proprietary
 
 Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonnées d’images avec ChatGPT.
@@ -20,6 +20,9 @@ Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonné
 Le plugin ne supprime aucune donnée à la désinstallation. Le module EXIF lit le fichier original mais ne le réécrit pas dans la version 1.1.
 
 == Changelog ==
+
+= 1.1.5 =
+* Ajoute un espace de respiration de 30 px sous le CTA des fiches de réalisation.
 
 = 1.1.4 =
 * Refonte éditoriale pleine largeur des fiches de réalisation.
