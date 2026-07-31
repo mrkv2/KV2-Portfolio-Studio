@@ -1,4 +1,4 @@
-# KV2 Portfolio Studio 1.1.3
+# KV2 Portfolio Studio 1.1.4
 
 Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio sans sacrifier le référencement ni les données existantes.
 
@@ -23,7 +23,7 @@ Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio 
 ## Installation
 
 1. Dans WordPress, ouvrir **Extensions → Ajouter une extension → Téléverser une extension**.
-2. Choisir `kv2-portfolio-studio-v1.1.3.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
+2. Choisir `kv2-portfolio-studio-v1.1.4.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
 3. Ouvrir **Réalisations → Réglages** et configurer l’affichage, Click to Chat, l’URL du formulaire et les droits des images.
 4. Dans Rank Math, vérifier que « Réalisations » et les taxonomies utiles sont incluses au sitemap. Laisser les archives pauvres en contenu en `noindex` jusqu’à ce qu’elles aient une description et plusieurs projets.
 5. Publier un projet test, puis contrôler l’affichage, le canonical et le JSON-LD avec Rich Snippet Sniper.
