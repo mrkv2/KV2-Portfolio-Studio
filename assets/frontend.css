@@ -12,21 +12,34 @@
   margin-inline: auto;
   max-width: 1200px;
   padding-inline: 24px;
+  width: 100%;
+}
+.single-kv2_realisation #primary.kv2ps-single {
+  float: none;
+  margin: 0;
+  max-width: none;
+  width: 100%;
+}
+.single-kv2_realisation .kv2ps-project.ast-article-single,
+.single-kv2_realisation .kv2ps-related .kv2ps-card.ast-article-single {
+  background: transparent;
+  margin: 0;
+  padding: 0;
 }
 .kv2ps-hero,
 .kv2ps-archive-header {
-  background: var(--kv2ps-paper);
-  padding-block: clamp(48px, 8vw, 100px);
+  background: linear-gradient(135deg, #f7f3ee 0%, #fff 100%);
+  padding-block: clamp(52px, 7vw, 88px);
 }
 .kv2ps-hero__inner {
   align-items: center;
   display: grid;
-  gap: clamp(32px, 6vw, 72px);
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: clamp(36px, 5vw, 64px);
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr);
 }
 .kv2ps-hero h1,
 .kv2ps-archive-header h1 {
-  font-size: clamp(2.1rem, 3.5vw, 3.4rem);
+  font-size: clamp(2.15rem, 3.2vw, 3.1rem);
   letter-spacing: -0.035em;
   line-height: 1.12;
   margin: 0.2em 0;
@@ -57,12 +70,43 @@
   object-fit: contain;
   width: 100%;
 }
+.kv2ps-hero__media {
+  background: #fff;
+  box-shadow: 0 18px 50px rgba(32, 29, 26, 0.13);
+  line-height: 0;
+}
+.kv2ps-taxonomy-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.kv2ps-taxonomy-chips a {
+  background: rgba(155, 107, 67, 0.1);
+  border: 1px solid rgba(155, 107, 67, 0.28);
+  border-radius: 999px;
+  color: var(--kv2ps-accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 6px 11px;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.kv2ps-taxonomy-chips a:hover,
+.kv2ps-taxonomy-chips a:focus-visible {
+  background: var(--kv2ps-accent);
+  color: #fff;
+}
 .kv2ps-project-date {
   font-size: 0.9rem;
 }
 .kv2ps-project__content,
 .kv2ps-archive-content {
-  padding-block: clamp(48px, 7vw, 90px);
+  padding-block: clamp(52px, 7vw, 82px);
+}
+.kv2ps-project__content {
+  background: #fff;
 }
 .kv2ps-story {
   display: grid;
@@ -71,11 +115,13 @@
   margin-bottom: 80px;
 }
 .kv2ps-story__item {
+  background: var(--kv2ps-paper);
   border-top: 3px solid var(--kv2ps-accent);
-  padding-top: 18px;
+  padding: 22px;
 }
 .kv2ps-story__item h2 {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
+  margin-top: 0;
 }
 .kv2ps-story__item p,
 .kv2ps-editor-content {
@@ -157,8 +203,12 @@
   z-index: 3;
 }
 .kv2ps-editor-content {
-  margin: 70px auto;
-  max-width: 820px;
+  font-size: 1.06rem;
+  margin: 0 auto 64px;
+  max-width: 880px;
+}
+.kv2ps-editor-content p {
+  line-height: 1.8;
 }
 .kv2ps-note {
   background: var(--kv2ps-paper);
@@ -176,15 +226,22 @@
   margin-top: 14px;
 }
 .kv2ps-project-meta {
-  border-top: 1px solid var(--kv2ps-line);
-  margin-top: 70px;
-  padding-top: 35px;
+  background: var(--kv2ps-paper);
+  border-top: 0;
+  margin-top: 64px;
+  padding: clamp(24px, 4vw, 42px);
 }
 .kv2ps-project-meta ul {
   display: grid;
-  gap: 12px;
+  gap: 12px 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   list-style: none;
   padding: 0;
+}
+.kv2ps-project-meta li {
+  background: #fff;
+  line-height: 1.55;
+  padding: 13px 15px;
 }
 .kv2ps-image-rights {
   border-top: 1px solid var(--kv2ps-line);
@@ -196,9 +253,88 @@
   background: var(--kv2ps-paper);
   padding-block: clamp(48px, 7vw, 84px);
 }
-.kv2ps-related > .kv2ps-container > h2 {
-  font-size: clamp(1.8rem, 3vw, 2.7rem);
-  margin-top: 0;
+.kv2ps-related__header {
+  align-items: end;
+  display: flex;
+  gap: 32px;
+  justify-content: space-between;
+  margin-bottom: 38px;
+}
+.kv2ps-related__header h2 {
+  font-size: clamp(1.8rem, 3vw, 2.45rem);
+  margin: 4px 0 8px;
+}
+.kv2ps-related__header p {
+  margin: 0;
+}
+.kv2ps-related__all {
+  border-bottom: 1px solid currentColor;
+  color: var(--kv2ps-ink);
+  flex: 0 0 auto;
+  font-weight: 700;
+  padding-bottom: 4px;
+  text-decoration: none;
+}
+.kv2ps-project-nav {
+  background: #fff;
+  border-block: 1px solid var(--kv2ps-line);
+  padding-block: 28px;
+}
+.kv2ps-project-nav__inner {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.kv2ps-project-nav__link {
+  align-items: center;
+  color: var(--kv2ps-ink);
+  display: flex;
+  gap: 16px;
+  min-height: 72px;
+  padding: 10px 0;
+  text-decoration: none;
+}
+.kv2ps-project-nav__link--next {
+  justify-content: flex-end;
+  text-align: right;
+}
+.kv2ps-project-nav__link small,
+.kv2ps-project-nav__link strong {
+  display: block;
+}
+.kv2ps-project-nav__link small {
+  color: var(--kv2ps-accent);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+}
+.kv2ps-project-nav__link strong {
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+.kv2ps-project-nav__arrow {
+  align-items: center;
+  border: 1px solid var(--kv2ps-line);
+  border-radius: 50%;
+  display: inline-flex;
+  flex: 0 0 46px;
+  font-size: 1.35rem;
+  height: 46px;
+  justify-content: center;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+.kv2ps-project-nav__link:hover .kv2ps-project-nav__arrow,
+.kv2ps-project-nav__link:focus-visible .kv2ps-project-nav__arrow {
+  background: var(--kv2ps-ink);
+  color: #fff;
+}
+.kv2ps-project-nav__link--previous:hover .kv2ps-project-nav__arrow {
+  transform: translateX(-3px);
+}
+.kv2ps-project-nav__link--next:hover .kv2ps-project-nav__arrow {
+  transform: translateX(3px);
 }
 .kv2ps-cta {
   background: var(--kv2ps-ink);
@@ -567,6 +703,10 @@
   .kv2ps-story__item:last-child {
     grid-column: 1/-1;
   }
+  .kv2ps-related__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
   .kv2ps-cta .kv2ps-container {
     align-items: flex-start;
     flex-direction: column;
@@ -601,6 +741,16 @@
   }
   .kv2ps-story__item:last-child {
     grid-column: auto;
+  }
+  .kv2ps-project-meta ul,
+  .kv2ps-project-nav__inner {
+    grid-template-columns: 1fr;
+  }
+  .kv2ps-project-nav__inner > span {
+    display: none;
+  }
+  .kv2ps-project-nav__link--next {
+    justify-content: space-between;
   }
   .kv2ps-gallery {
     grid-template-columns: 1fr;
