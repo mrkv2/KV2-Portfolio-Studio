@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kv2.fr/schemas/portfolio-realisation-1.1.json",
+  "title": "KV2 Portfolio Studio — Complete realization package",
+  "type": "object",
+  "required": ["schema_version", "project"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "1.1" },
+    "source": { "type": "object", "additionalProperties": true },
+    "project": {
+      "type": "object",
+      "required": ["match", "fields", "images"],
+      "additionalProperties": false,
+      "properties": {
+        "match": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "realisation_id": {
+              "oneOf": [{ "type": "integer", "minimum": 1 }, { "type": "null" }]
+            },
+            "source_reference": { "type": "string" }
+          }
+        },
+        "fields": {
+          "type": "object",
+          "required": ["title"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "maxLength": 200 },
+            "excerpt": { "type": "string", "maxLength": 600 },
+            "content": { "type": "string", "maxLength": 15000 },
+            "problem": { "type": "string", "maxLength": 3000 },
+            "initial_state": { "type": "string", "maxLength": 3000 },
+            "constraints": { "type": "string", "maxLength": 3000 },
+            "intervention": { "type": "string", "maxLength": 5000 },
+            "result": { "type": "string", "maxLength": 3000 },
+            "materials": { "type": "string", "maxLength": 3000 },
+            "duration": { "type": "string", "maxLength": 200 },
+            "work_type": { "type": "string", "maxLength": 200 },
+            "price_range": { "type": "string", "maxLength": 200 },
+            "project_date": { "$ref": "#/$defs/dateOrEmpty" },
+            "confidential": { "type": "boolean" }
+          }
+        },
+        "testimonial": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "quote": { "type": "string", "maxLength": 3000 },
+            "author": { "type": "string", "maxLength": 200 },
+            "source": { "type": "string", "maxLength": 100 },
+            "source_url": { "$ref": "#/$defs/uriOrEmpty" },
+            "rating": {
+              "oneOf": [
+                { "type": "integer", "minimum": 1, "maximum": 5 },
+                { "const": "" }
+              ]
+            },
+            "date": { "$ref": "#/$defs/dateOrEmpty" },
+            "consent": { "type": "boolean" }
+          }
+        },
+        "taxonomies": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "services": { "$ref": "#/$defs/terms" },
+            "villes": { "$ref": "#/$defs/terms" },
+            "meubles": { "$ref": "#/$defs/terms" },
+            "styles": { "$ref": "#/$defs/terms" },
+            "techniques": { "$ref": "#/$defs/terms" }
+          }
+        },
+        "cta": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "use_global": { "type": "boolean" },
+            "title": { "type": "string" },
+            "text": { "type": "string" },
+            "primary_action": { "enum": ["click_to_chat", "form"] },
+            "primary_label": { "type": "string" },
+            "secondary_enabled": {
+              "oneOf": [{ "type": "boolean" }, { "enum": ["0", "1"] }]
+            },
+            "secondary_label": { "type": "string" },
+            "form_url": { "$ref": "#/$defs/uriOrEmpty" },
+            "ctc_trigger": { "enum": ["ctc_chat", "ctc_greetings"] }
+          }
+        },
+        "seo": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "maxLength": 200 },
+            "description": { "type": "string", "maxLength": 400 },
+            "focus_keyword": { "type": "string", "maxLength": 200 }
+          }
+        },
+        "images": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "object",
+            "required": ["match", "role", "fields"],
+            "additionalProperties": false,
+            "properties": {
+              "match": { "$ref": "#/$defs/imageMatch" },
+              "role": { "enum": ["featured", "before", "after"] },
+              "position": { "type": "integer", "minimum": 0 },
+              "fields": { "$ref": "#/$defs/imageFields" },
+              "exif_suggestions": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "uriOrEmpty": {
+      "oneOf": [{ "const": "" }, { "type": "string", "format": "uri" }]
+    },
+    "dateOrEmpty": {
+      "oneOf": [{ "const": "" }, { "type": "string", "format": "date" }]
+    },
+    "terms": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "required": ["name"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "slug": { "type": "string" }
+            }
+          }
+        ]
+      }
+    },
+    "imageMatch": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "attachment_id": { "type": "integer", "minimum": 1 },
+        "filename": { "type": "string" },
+        "source_url": { "type": "string", "format": "uri" }
+      }
+    },
+    "imageFields": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string" },
+        "alt": { "type": "string" },
+        "caption": { "type": "string" },
+        "description": { "type": "string" },
+        "credit": { "type": "string" },
+        "copyright": { "type": "string" },
+        "keywords": { "type": "array", "items": { "type": "string" } },
+        "location": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "city": { "type": "string" },
+            "region": { "type": "string" },
+            "country": { "type": "string" },
+            "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
+            "longitude": { "type": "number", "minimum": -180, "maximum": 180 }
+          }
+        },
+        "date_created": { "$ref": "#/$defs/dateOrEmpty" },
+        "license_url": { "$ref": "#/$defs/uriOrEmpty" },
+        "acquire_license_url": { "$ref": "#/$defs/uriOrEmpty" }
+      }
+    }
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kv2.fr/schemas/portfolio-image-metadata-1.0.json",
+  "title": "KV2 Portfolio Studio — Image metadata package",
+  "type": "object",
+  "required": ["schema_version", "images"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "source": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "generator": { "type": "string" },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "project": { "type": "string" },
+        "site": { "type": "string", "format": "uri" }
+      }
+    },
+    "images": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "required": ["match", "fields"],
+        "additionalProperties": false,
+        "properties": {
+          "match": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": false,
+            "properties": {
+              "attachment_id": { "type": "integer", "minimum": 1 },
+              "filename": { "type": "string", "minLength": 1 },
+              "source_url": { "type": "string", "format": "uri" }
+            }
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "title": { "type": "string", "maxLength": 200 },
+              "alt": { "type": "string", "maxLength": 300 },
+              "caption": { "type": "string", "maxLength": 1000 },
+              "description": { "type": "string", "maxLength": 5000 },
+              "credit": { "type": "string", "maxLength": 300 },
+              "copyright": { "type": "string", "maxLength": 300 },
+              "keywords": {
+                "type": "array",
+                "items": { "type": "string", "maxLength": 100 },
+                "maxItems": 30,
+                "uniqueItems": true
+              },
+              "location": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "city": { "type": "string" },
+                  "region": { "type": "string" },
+                  "country": { "type": "string" },
+                  "latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  }
+                }
+              },
+              "date_created": { "type": "string", "format": "date" },
+              "license_url": {
+                "oneOf": [
+                  { "const": "" },
+                  { "type": "string", "format": "uri" }
+                ]
+              },
+              "acquire_license_url": {
+                "oneOf": [
+                  { "const": "" },
+                  { "type": "string", "format": "uri" }
+                ]
+              }
+            }
+          },
+          "exif_suggestions": {
+            "type": "object",
+            "description": "Suggestions conservées dans le paquet canonique. KV2 Portfolio Studio 1.0 ne réécrit pas le fichier image.",
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.1",
+  "source": {
+    "generator": "ChatGPT",
+    "generated_at": "2026-07-31T15:00:00Z",
+    "site": "https://example.com/",
+    "status_policy": "draft_only"
+  },
+  "project": {
+    "match": {
+      "realisation_id": null,
+      "source_reference": "Message client du 31 juillet 2026"
+    },
+    "fields": {
+      "title": "Restauration d’un fauteuil bridge à Ville Exemple",
+      "excerpt": "Restauration complète d’un fauteuil bridge avec reprise de la garniture et pose d’un tissu vert.",
+      "content": "<p>Cette réalisation présente les principales étapes de la restauration.</p>",
+      "problem": "Le fauteuil était devenu inconfortable et son tissu présentait une usure importante.",
+      "initial_state": "Garniture affaissée et tissu usé.",
+      "constraints": "Conserver la structure et l’allure d’origine.",
+      "intervention": "Dépose de l’ancien tissu, reprise de la garniture et pose du nouveau revêtement.",
+      "result": "Le fauteuil a retrouvé son confort et une finition adaptée à son intérieur.",
+      "materials": "Tissu d’ameublement vert et fournitures de garniture.",
+      "duration": "3 semaines",
+      "work_type": "Restauration",
+      "price_range": "",
+      "project_date": "2026-07-31",
+      "confidential": false
+    },
+    "testimonial": {
+      "quote": "",
+      "author": "",
+      "source": "",
+      "source_url": "",
+      "rating": "",
+      "date": "",
+      "consent": false
+    },
+    "taxonomies": {
+      "services": [
+        { "name": "Restauration de fauteuil", "slug": "restauration-fauteuil" }
+      ],
+      "villes": [{ "name": "Ville Exemple", "slug": "ville-exemple" }],
+      "meubles": [{ "name": "Fauteuil bridge", "slug": "fauteuil-bridge" }],
+      "styles": [],
+      "techniques": [{ "name": "Garnissage", "slug": "garnissage" }]
+    },
+    "cta": {
+      "use_global": true,
+      "title": "Vous avez un fauteuil à restaurer ?",
+      "text": "Envoyez-nous quelques photos pour obtenir un premier avis.",
+      "primary_action": "click_to_chat",
+      "primary_label": "Envoyer mes photos sur WhatsApp",
+      "secondary_enabled": "1",
+      "secondary_label": "Utiliser le formulaire",
+      "form_url": "https://example.com/contact/",
+      "ctc_trigger": "ctc_chat"
+    },
+    "seo": {
+      "title": "Restauration d’un fauteuil bridge à Ville Exemple",
+      "description": "Découvrez la restauration complète d’un fauteuil bridge par Atelier Exemple : garniture, tissu et résultat final.",
+      "focus_keyword": "restauration fauteuil bridge Ville Exemple"
+    },
+    "images": [
+      {
+        "match": {
+          "attachment_id": 123,
+          "filename": "fauteuil-bridge-apres.jpg",
+          "source_url": "https://example.com/wp-content/uploads/2026/07/fauteuil-bridge-apres.jpg"
+        },
+        "role": "featured",
+        "position": 0,
+        "fields": {
+          "title": "Fauteuil bridge restauré",
+          "alt": "Fauteuil bridge en bois retapissé avec un tissu vert après restauration",
+          "caption": "Le fauteuil bridge après restauration.",
+          "description": "Vue finale du fauteuil restauré dans l’atelier.",
+          "credit": "Atelier Exemple",
+          "copyright": "Atelier Exemple",
+          "keywords": ["fauteuil bridge", "restauration", "tapissier"],
+          "location": {
+            "city": "Ville Exemple",
+            "region": "Région Exemple",
+            "country": "FR"
+          },
+          "date_created": "2026-07-31",
+          "license_url": "",
+          "acquire_license_url": ""
+        },
+        "exif_suggestions": {
+          "Artist": "Atelier Exemple",
+          "Copyright": "Atelier Exemple"
+        }
+      }
+    ]
+  }
+}

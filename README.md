@@ -10,6 +10,7 @@ Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio 
 - gère les photos avant/après en colonnes ou dans un comparateur accessible ;
 - propose des CTA globaux ou propres à une réalisation, avec déclenchement Click to Chat et lien vers le formulaire ;
 - propose trois affichages — grille, tuiles éditoriales et Masonry — avec colonnes, format d’image, style de carte et quantité configurables ;
+- reprend par défaut le rendu WP Portfolio classique : Masonry fluide en trois colonnes, proportions originales, titres sous les images, filtres de services, recherche à droite et bouton « Voir plus de réalisations » ;
 - conserve une pagination HTML explorée par les moteurs, même lorsque l’UX utilise « Afficher plus » ou le défilement infini ;
 - laisse Rank Math gérer les titres SEO, descriptions, canonicals et sitemaps ;
 - peut compléter le graphe Rank Math avec `CreativeWork` et enrichir les `ImageObject` existants avec créateur, crédit, copyright et licence ;
@@ -27,11 +28,13 @@ Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio 
 4. Dans Rank Math, vérifier que « Réalisations » et les taxonomies utiles sont incluses au sitemap. Laisser les archives pauvres en contenu en `noindex` jusqu’à ce qu’elles aient une description et plusieurs projets.
 5. Publier un projet test, puis contrôler l’affichage, le canonical et le JSON-LD avec Rich Snippet Sniper.
 
-L’archive est disponible par défaut à `/realisations/`. Le shortcode `[kv2_portfolio limit="8" columns="2"]` permet d’insérer le portfolio dans une page existante. Filtres et affichages peuvent être combinés :
+L’archive est disponible par défaut à `/realisations/`. Le shortcode `[kv2_portfolio]` insère le rendu classique complet dans une page existante, CTA compris. Filtres et affichages peuvent être combinés :
 
 `[kv2_portfolio service="restauration-fauteuil" ville="montpellier" layout="masonry" columns="2" image_ratio="auto" card_style="minimal" load_mode="button"]`
 
 Valeurs de `layout` : `grid`, `tiles`, `masonry`. Valeurs de `load_mode` : `paged`, `button`, `infinite`.
+
+Le préréglage initial et les installations encore restées sur les anciens réglages par défaut utilisent `masonry`, 3 colonnes, ratio `auto`, cartes `classic`, 12 réalisations et navigation `button`. Les attributs `show_filters="0"`, `show_search="0"` ou `show_cta="0"` permettent de masquer séparément ces éléments. Les réglages déjà personnalisés sont conservés lors de la mise à jour.
 
 ## Migration depuis WP Portfolio
 
