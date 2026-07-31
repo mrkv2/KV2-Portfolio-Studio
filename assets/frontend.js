@@ -11,57 +11,22 @@
       .trim();
   }
 
-  function masonryColumns(grid) {
-    var requested = 1;
-    [1, 2, 3, 4].some(function (count) {
-      if (grid.classList.contains("kv2ps-cols-" + count)) {
-        requested = count;
-        return true;
-      }
-      return false;
-    });
-    if (window.innerWidth <= 620) {
-      return 1;
-    }
-    if (window.innerWidth <= 900) {
-      return Math.min(2, requested);
-    }
-    return requested;
-  }
-
   function layoutMasonry(grid) {
     if (!grid || !grid.classList.contains("kv2ps-layout-masonry")) {
       return;
     }
 
-    window.cancelAnimationFrame(grid.kv2psLayoutFrame || 0);
-    grid.kv2psLayoutFrame = window.requestAnimationFrame(function () {
-      var cards = Array.prototype.filter.call(
-        grid.querySelectorAll(":scope > .kv2ps-card"),
-        function (card) {
-          return !card.hidden;
-        },
-      );
-      var columns = masonryColumns(grid);
-      var gap = 32;
-      var width = (grid.clientWidth - gap * (columns - 1)) / columns;
-      var heights = Array(columns).fill(0);
-
-      grid.classList.add("kv2ps-masonry-ready");
-      cards.forEach(function (card) {
-        card.style.width = width + "px";
-      });
-
-      cards.forEach(function (card) {
-        var column = heights.indexOf(Math.min.apply(Math, heights));
-        card.style.left = column * (width + gap) + "px";
-        card.style.top = heights[column] + "px";
-        heights[column] += card.offsetHeight + gap;
-      });
-
-      grid.style.height = cards.length
-        ? Math.max.apply(Math, heights) - gap + "px"
-        : "0px";
+    /*
+     * CSS columns provide a stable, native masonry layout. The previous
+     * absolute-positioning pass measured WordPress lazy images while their
+     * intrinsic placeholder was still 3000 x 1500, producing gigantic cards.
+     */
+    grid.classList.remove("kv2ps-masonry-ready");
+    grid.style.removeProperty("height");
+    grid.querySelectorAll(":scope > .kv2ps-card").forEach(function (card) {
+      card.style.removeProperty("width");
+      card.style.removeProperty("left");
+      card.style.removeProperty("top");
     });
   }
 

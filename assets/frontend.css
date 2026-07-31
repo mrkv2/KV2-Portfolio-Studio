@@ -26,10 +26,11 @@
 }
 .kv2ps-hero h1,
 .kv2ps-archive-header h1 {
-  font-size: clamp(2.2rem, 5vw, 4.8rem);
+  font-size: clamp(2.1rem, 3.5vw, 3.4rem);
   letter-spacing: -0.035em;
-  line-height: 1.04;
+  line-height: 1.12;
   margin: 0.2em 0;
+  overflow-wrap: anywhere;
 }
 .kv2ps-eyebrow {
   color: var(--kv2ps-accent);
@@ -50,10 +51,10 @@
   margin: 0;
 }
 .kv2ps-hero__media img {
-  aspect-ratio: 4/3;
   display: block;
   height: auto;
-  object-fit: cover;
+  max-height: 70vh;
+  object-fit: contain;
   width: 100%;
 }
 .kv2ps-project-date {
@@ -346,11 +347,17 @@
   display: none;
 }
 .kv2ps-card-style-classic .kv2ps-card__title {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.4;
   margin: 0;
   text-align: center;
+}
+.kv2ps-card-style-classic .kv2ps-card__title a {
+  color: var(--kv2ps-ink);
+  display: block;
+  font-size: inherit;
+  line-height: inherit;
 }
 .kv2ps-card-style-overlay .kv2ps-card {
   border: 0;
@@ -386,6 +393,7 @@
 }
 .kv2ps-card__image img {
   aspect-ratio: 4/3;
+  contain: none;
   display: block;
   height: auto;
   object-fit: cover;
@@ -394,7 +402,7 @@
 }
 .kv2ps-ratio-auto .kv2ps-card__image img {
   aspect-ratio: auto;
-  object-fit: contain;
+  object-fit: cover;
 }
 .kv2ps-ratio-1-1 .kv2ps-card__image img,
 .kv2ps-ratio-1-1 .kv2ps-card__placeholder {
@@ -571,6 +579,15 @@
   }
 }
 @media (max-width: 620px) {
+  .kv2ps-hero,
+  .kv2ps-archive-header {
+    padding-block: 38px;
+  }
+  .kv2ps-hero h1,
+  .kv2ps-archive-header h1 {
+    font-size: clamp(1.85rem, 9vw, 2.5rem);
+    letter-spacing: -0.025em;
+  }
   .kv2ps-story,
   .kv2ps-comparison__columns,
   .kv2ps-grid {
