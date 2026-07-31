@@ -92,6 +92,24 @@ final class KV2PS_Plugin {
 			}
 		}
 
+		if ( version_compare( $installed_version, '1.1.6', '<' ) ) {
+			$defaults = self::default_settings();
+			$settings['phone']               = '04 11 93 96 29';
+			$settings['ctc_trigger']         = 'ctc_greetings';
+
+			if ( empty( $settings['cta_title'] ) || 'Vous avez un projet similaire ?' === $settings['cta_title'] ) {
+				$settings['cta_title'] = $defaults['cta_title'];
+			}
+			if ( empty( $settings['cta_text'] ) || 'Parlons de votre meuble, de vos contraintes et du résultat souhaité.' === $settings['cta_text'] ) {
+				$settings['cta_text'] = $defaults['cta_text'];
+			}
+			foreach ( array( 'portfolio_page_url', 'cta_process_title', 'cta_process_steps', 'cta_benefits', 'cta_show_opening_status' ) as $key ) {
+				if ( ! isset( $settings[ $key ] ) ) {
+					$settings[ $key ] = $defaults[ $key ];
+				}
+			}
+		}
+
 		update_option( 'kv2ps_settings', $settings );
 		update_option( 'kv2ps_version', KV2PS_VERSION );
 	}
@@ -100,8 +118,9 @@ final class KV2PS_Plugin {
 		return array(
 			'archive_title'              => 'Nos réalisations',
 			'archive_intro'              => '',
+			'portfolio_page_url'         => home_url( '/realisation-tapisserie/' ),
 			'contact_url'                => home_url( '/contact/' ),
-			'phone'                      => '',
+			'phone'                      => '04 11 93 96 29',
 			'whatsapp'                   => '',
 			'accent_color'               => '#9b6b43',
 			'rank_math_schema'           => '0',
@@ -116,14 +135,18 @@ final class KV2PS_Plugin {
 			'archive_show_search'        => '1',
 			'archive_show_cta'           => '1',
 			'before_after_mode'          => 'columns',
-			'cta_title'                  => 'Vous avez un projet similaire ?',
-			'cta_text'                   => 'Parlons de votre meuble, de vos contraintes et du résultat souhaité.',
+			'cta_title'                  => 'Un meuble à restaurer ?',
+			'cta_text'                   => 'Chaise, fauteuil, canapé ou tapis — cannage, rempaillage et réfection complète.',
+			'cta_process_title'          => 'Comment ça se passe',
+			'cta_process_steps'          => "Vous envoyez des photos via le formulaire ou WhatsApp.\nNous vous donnons une estimation rapide.\nNous récupérons vos meubles sur rendez-vous.\nNous les livrons une fois restaurés.",
+			'cta_benefits'               => "Devis gratuit\nEnlèvement + livraison\nPaiement en 4 fois",
+			'cta_show_opening_status'    => '1',
 			'cta_primary_action'         => 'click_to_chat',
 			'cta_primary_label'          => 'Échanger sur WhatsApp',
 			'cta_secondary_enabled'      => '1',
 			'cta_secondary_label'        => 'Envoyer une demande',
 			'form_url'                   => home_url( '/contact/' ),
-			'ctc_trigger'                => 'ctc_chat',
+			'ctc_trigger'                => 'ctc_greetings',
 			'image_creator_type'         => 'Organization',
 			'image_creator_name'         => get_bloginfo( 'name' ),
 			'image_creator_url'          => home_url( '/' ),
@@ -328,7 +351,7 @@ final class KV2PS_Plugin {
 		$load     = isset( $values['load_mode'] ) && in_array( $values['load_mode'], array( 'paged', 'button', 'infinite' ), true ) ? $values['load_mode'] : $settings['archive_load_mode'];
 		return array(
 			'layout'      => $layout,
-			'columns'     => max( 1, min( 4, isset( $values['columns'] ) ? absint( $values['columns'] ) : absint( $settings['archive_columns'] ) ) ),
+			'columns'     => max( 1, min( 3, isset( $values['columns'] ) ? absint( $values['columns'] ) : absint( $settings['archive_columns'] ) ) ),
 			'image_ratio' => $ratio,
 			'card_style'  => $card,
 			'load_mode'   => $load,
@@ -423,6 +446,11 @@ final class KV2PS_Plugin {
 		$config   = array(
 			'title'             => $settings['cta_title'],
 			'text'              => $settings['cta_text'],
+			'phone'             => $settings['phone'],
+			'process_title'     => $settings['cta_process_title'],
+			'process_steps'     => $settings['cta_process_steps'],
+			'benefits'          => $settings['cta_benefits'],
+			'show_opening'      => $settings['cta_show_opening_status'],
 			'primary_action'    => $settings['cta_primary_action'],
 			'primary_label'     => $settings['cta_primary_label'],
 			'secondary_enabled' => $settings['cta_secondary_enabled'],
@@ -452,24 +480,89 @@ final class KV2PS_Plugin {
 		return $config;
 	}
 
-	public static function render_cta( $post_id ) {
-		$config = self::get_cta_config( $post_id );
-		if ( ! $config['title'] && ! $config['text'] ) {
+	private static function cta_lines( $value ) {
+		$lines = preg_split( '/\R/u', (string) $value );
+		$lines = is_array( $lines ) ? array_map( 'trim', $lines ) : array();
+		return array_values( array_filter( $lines, 'strlen' ) );
+	}
+
+	private static function whatsapp_icon() {
+		return '<svg class="kv2ps-button__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.25-.46-2.39-1.47-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2.01-1.42.25-.7.25-1.3.17-1.42-.07-.13-.27-.2-.57-.35M12.04 21.5h-.01a9.47 9.47 0 0 1-4.83-1.32l-.35-.21-3.59.94.96-3.5-.23-.36A9.46 9.46 0 1 1 12.04 21.5m8.06-17.56A11.31 11.31 0 0 0 12.06.61C5.81.61.72 5.7.72 11.95c0 2 .52 3.96 1.51 5.68L.62 23.5l6.01-1.58a11.35 11.35 0 0 0 5.42 1.38h.01c6.25 0 11.34-5.09 11.34-11.34 0-3.03-1.18-5.88-3.3-8.02"/></svg>';
+	}
+
+	private static function render_opening_status() {
+		if ( ! shortcode_exists( 'open_text' ) || ! shortcode_exists( 'open' ) ) {
 			return;
 		}
+
+		$status_shortcode = '[open_text update="immediate"]'
+			. '%if_open_now%<span class="kv2ps-cta__availability kv2ps-cta__availability--open"><span class="kv2ps-cta__status-dot" aria-hidden="true"></span><span><strong>'
+			. esc_html__( 'Accueil téléphonique ouvert', 'kv2-portfolio-studio' )
+			. '</strong><small>' . esc_html__( 'Nous vous répondons aujourd’hui jusqu’à %today_end%.', 'kv2-portfolio-studio' ) . '</small></span></span>'
+			. '%else%<span class="kv2ps-cta__availability kv2ps-cta__availability--closed"><span class="kv2ps-cta__status-dot" aria-hidden="true"></span><span><strong>'
+			. esc_html__( 'Accueil téléphonique fermé', 'kv2-portfolio-studio' )
+			. '</strong><small>%if_open_later%'
+			. esc_html__( 'Nous répondrons aujourd’hui à partir de %today_next%.', 'kv2-portfolio-studio' )
+			. '%else%%if_open_tomorrow%'
+			. esc_html__( 'Nous répondrons demain à %tomorrow_start%.', 'kv2-portfolio-studio' )
+			. '%else%'
+			. esc_html__( 'Nous répondrons dès la prochaine réouverture.', 'kv2-portfolio-studio' )
+			. '%end%%end%</small></span></span>%end%[/open_text]';
+		$hours_shortcode  = '[open sentence consolidation="separate" update="immediate"]';
+		?>
+		<div class="kv2ps-cta__opening" aria-label="<?php esc_attr_e( 'Disponibilité et horaires', 'kv2-portfolio-studio' ); ?>">
+			<?php echo wp_kses_post( do_shortcode( $status_shortcode ) ); ?>
+			<div class="kv2ps-cta__hours"><strong><?php esc_html_e( 'Horaires', 'kv2-portfolio-studio' ); ?></strong><span><?php echo wp_kses_post( do_shortcode( $hours_shortcode ) ); ?></span></div>
+		</div>
+		<?php
+	}
+
+	public static function render_cta( $post_id ) {
+		static $instance = 0;
+
+		$config        = self::get_cta_config( $post_id );
+		$process_steps = self::cta_lines( $config['process_steps'] );
+		$benefits      = self::cta_lines( $config['benefits'] );
+		$phone_href    = preg_replace( '/[^0-9+]/', '', (string) $config['phone'] );
+		if ( ! $config['title'] && ! $config['text'] && ! $process_steps && ! $benefits ) {
+			return;
+		}
+		$instance++;
+		$title_id        = 'kv2ps-cta-title-' . $instance;
 		$primary_is_chat = 'click_to_chat' === $config['primary_action'];
 		$chat_class      = 'ctc_greetings' === $config['ctc_trigger'] ? 'ctc_greetings' : 'ctc_chat';
 		$chat_href       = 'ctc_greetings' === $chat_class ? '#' : '#ctc_chat';
 		$primary_href    = $primary_is_chat ? $chat_href : $config['form_url'];
-		$primary_class   = $primary_is_chat ? $chat_class : '';
+		$primary_class   = $primary_is_chat ? $chat_class . ' kv2ps-button--whatsapp' : 'kv2ps-button--form';
 		$secondary_href  = $primary_is_chat ? $config['form_url'] : $chat_href;
-		$secondary_class = $primary_is_chat ? '' : $chat_class;
+		$secondary_class = $primary_is_chat ? 'kv2ps-button--form' : $chat_class . ' kv2ps-button--whatsapp';
 		?>
-		<section class="kv2ps-cta" aria-labelledby="kv2ps-cta-title"><div class="kv2ps-container"><div class="kv2ps-cta__copy"><h2 id="kv2ps-cta-title"><?php echo esc_html( $config['title'] ); ?></h2><?php if ( $config['text'] ) : ?><p><?php echo esc_html( $config['text'] ); ?></p><?php endif; ?></div><div class="kv2ps-cta__actions">
-			<a class="kv2ps-button kv2ps-cta-link <?php echo esc_attr( $primary_class ); ?>" data-kv2ps-action="<?php echo esc_attr( $config['primary_action'] ); ?>" href="<?php echo esc_url( $primary_href ); ?>"><?php echo esc_html( $config['primary_label'] ); ?></a>
-			<?php if ( '1' === $config['secondary_enabled'] && $secondary_href ) : ?><a class="kv2ps-button kv2ps-button--secondary kv2ps-cta-link <?php echo esc_attr( $secondary_class ); ?>" data-kv2ps-action="<?php echo esc_attr( $primary_is_chat ? 'form' : 'click_to_chat' ); ?>" href="<?php echo esc_url( $secondary_href ); ?>"><?php echo esc_html( $config['secondary_label'] ); ?></a><?php endif; ?>
-			<?php if ( $config['form_url'] ) : ?><small class="kv2ps-cta__form-note"><?php esc_html_e( 'Vous pouvez aussi transmettre les détails et les photos de votre projet via le formulaire.', 'kv2-portfolio-studio' ); ?></small><?php endif; ?>
-		</div></div></section>
+		<section class="kv2ps-cta" aria-labelledby="<?php echo esc_attr( $title_id ); ?>">
+			<div class="kv2ps-container kv2ps-cta__container">
+				<div class="kv2ps-cta__copy">
+					<h2 id="<?php echo esc_attr( $title_id ); ?>"><?php echo esc_html( $config['title'] ); ?></h2>
+					<?php if ( $config['text'] ) : ?><p class="kv2ps-cta__intro"><?php echo esc_html( $config['text'] ); ?></p><?php endif; ?>
+					<?php if ( $phone_href ) : ?><p class="kv2ps-cta__phone"><span><?php esc_html_e( 'Appelez-nous', 'kv2-portfolio-studio' ); ?></span><a href="tel:<?php echo esc_attr( $phone_href ); ?>"><?php echo esc_html( $config['phone'] ); ?></a></p><?php endif; ?>
+					<?php if ( '1' === $config['show_opening'] ) : self::render_opening_status(); endif; ?>
+				</div>
+
+				<?php if ( $process_steps ) : ?>
+					<div class="kv2ps-cta__process">
+						<?php if ( $config['process_title'] ) : ?><h3><?php echo esc_html( $config['process_title'] ); ?></h3><?php endif; ?>
+						<ol><?php foreach ( $process_steps as $step ) : ?><li><?php echo esc_html( $step ); ?></li><?php endforeach; ?></ol>
+					</div>
+				<?php endif; ?>
+
+				<div class="kv2ps-cta__conversion">
+					<?php if ( $benefits ) : ?><ul class="kv2ps-cta__benefits"><?php foreach ( $benefits as $benefit ) : ?><li><span aria-hidden="true">✓</span><?php echo esc_html( $benefit ); ?></li><?php endforeach; ?></ul><?php endif; ?>
+					<div class="kv2ps-cta__actions">
+						<a class="kv2ps-button kv2ps-cta-link <?php echo esc_attr( $primary_class ); ?>" data-kv2ps-action="<?php echo esc_attr( $config['primary_action'] ); ?>" href="<?php echo esc_url( $primary_href ); ?>"><?php if ( $primary_is_chat ) : echo self::whatsapp_icon(); endif; ?><span><?php echo esc_html( $config['primary_label'] ); ?></span></a>
+						<?php if ( '1' === $config['secondary_enabled'] && $secondary_href ) : ?><a class="kv2ps-button kv2ps-button--secondary kv2ps-cta-link <?php echo esc_attr( $secondary_class ); ?>" data-kv2ps-action="<?php echo esc_attr( $primary_is_chat ? 'form' : 'click_to_chat' ); ?>" href="<?php echo esc_url( $secondary_href ); ?>"><?php if ( ! $primary_is_chat ) : echo self::whatsapp_icon(); endif; ?><span><?php echo esc_html( $config['secondary_label'] ); ?></span></a><?php endif; ?>
+						<?php if ( $config['form_url'] ) : ?><small class="kv2ps-cta__form-note"><?php esc_html_e( 'Envoyez les détails et les photos de votre projet : nous pourrons vous répondre plus précisément.', 'kv2-portfolio-studio' ); ?></small><?php endif; ?>
+					</div>
+				</div>
+			</div>
+		</section>
 		<?php
 	}
 
