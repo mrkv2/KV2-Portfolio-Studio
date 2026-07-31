@@ -16,17 +16,42 @@
       return;
     }
 
-    /*
-     * CSS columns provide a stable, native masonry layout. The previous
-     * absolute-positioning pass measured WordPress lazy images while their
-     * intrinsic placeholder was still 3000 x 1500, producing gigantic cards.
-     */
-    grid.classList.remove("kv2ps-masonry-ready");
-    grid.style.removeProperty("height");
-    grid.querySelectorAll(":scope > .kv2ps-card").forEach(function (card) {
-      card.style.removeProperty("width");
-      card.style.removeProperty("left");
-      card.style.removeProperty("top");
+    grid.querySelectorAll("img[sizes]").forEach(function (image) {
+      image.setAttribute(
+        "sizes",
+        image.getAttribute("sizes").replace(/^auto,\s*/i, ""),
+      );
+    });
+
+    window.cancelAnimationFrame(grid.kv2psLayoutFrame || 0);
+    grid.kv2psLayoutFrame = window.requestAnimationFrame(function () {
+      var cards = Array.prototype.filter.call(
+        grid.querySelectorAll(":scope > .kv2ps-card"),
+        function (card) {
+          return !card.hidden;
+        },
+      );
+      var requested = [1, 2, 3, 4].find(function (count) {
+        return grid.classList.contains("kv2ps-cols-" + count);
+      }) || 1;
+      var columns = window.innerWidth <= 620 ? 1 : window.innerWidth <= 900 ? Math.min(2, requested) : requested;
+      var gap = 40;
+      var width = (grid.clientWidth - gap * (columns - 1)) / columns;
+      var heights = Array(columns).fill(0);
+
+      grid.classList.add("kv2ps-masonry-ready");
+      cards.forEach(function (card) {
+        card.style.width = width + "px";
+      });
+      cards.forEach(function (card) {
+        var column = heights.indexOf(Math.min.apply(Math, heights));
+        card.style.left = column * (width + gap) + "px";
+        card.style.top = heights[column] + "px";
+        heights[column] += card.offsetHeight + 50;
+      });
+      grid.style.height = cards.length
+        ? Math.max.apply(Math, heights) - 50 + "px"
+        : "0px";
     });
   }
 
