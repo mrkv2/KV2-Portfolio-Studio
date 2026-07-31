@@ -22,9 +22,16 @@ while ( have_posts() ) :
 				<div class="kv2ps-container kv2ps-hero__inner">
 					<div class="kv2ps-hero__copy">
 						<?php
-						$services = get_the_term_list( $post_id, 'kv2_service', '', ' · ' );
-						if ( $services ) {
-							echo '<div class="kv2ps-eyebrow">' . wp_kses_post( $services ) . '</div>';
+						$service_terms = get_the_terms( $post_id, 'kv2_service' );
+						if ( $service_terms && ! is_wp_error( $service_terms ) ) {
+							echo '<nav class="kv2ps-taxonomy-chips" aria-label="' . esc_attr__( 'Catégories de la réalisation', 'kv2-portfolio-studio' ) . '">';
+							foreach ( $service_terms as $service_term ) {
+								$service_url = get_term_link( $service_term );
+								if ( ! is_wp_error( $service_url ) ) {
+									echo '<a href="' . esc_url( $service_url ) . '">' . esc_html( $service_term->name ) . '</a>';
+								}
+							}
+							echo '</nav>';
 						}
 						?>
 						<h1><?php the_title(); ?></h1>
@@ -165,6 +172,31 @@ while ( have_posts() ) :
 		</article>
 
 		<?php
+		$previous_project = get_previous_post( true, '', 'kv2_service' );
+		$next_project     = get_next_post( true, '', 'kv2_service' );
+		$previous_project = $previous_project ?: get_previous_post();
+		$next_project     = $next_project ?: get_next_post();
+		if ( $previous_project || $next_project ) :
+			?>
+			<nav class="kv2ps-project-nav" aria-label="<?php esc_attr_e( 'Naviguer entre les réalisations', 'kv2-portfolio-studio' ); ?>">
+				<div class="kv2ps-container kv2ps-project-nav__inner">
+					<?php if ( $previous_project ) : ?>
+						<a class="kv2ps-project-nav__link kv2ps-project-nav__link--previous" href="<?php echo esc_url( get_permalink( $previous_project ) ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Réalisation précédente : %s', 'kv2-portfolio-studio' ), get_the_title( $previous_project ) ) ); ?>">
+							<span class="kv2ps-project-nav__arrow" aria-hidden="true">←</span><span><small><?php esc_html_e( 'Réalisation précédente', 'kv2-portfolio-studio' ); ?></small><strong><?php echo esc_html( get_the_title( $previous_project ) ); ?></strong></span>
+						</a>
+					<?php else : ?><span></span><?php endif; ?>
+					<?php if ( $next_project ) : ?>
+						<a class="kv2ps-project-nav__link kv2ps-project-nav__link--next" href="<?php echo esc_url( get_permalink( $next_project ) ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Réalisation suivante : %s', 'kv2-portfolio-studio' ), get_the_title( $next_project ) ) ); ?>">
+							<span><small><?php esc_html_e( 'Réalisation suivante', 'kv2-portfolio-studio' ); ?></small><strong><?php echo esc_html( get_the_title( $next_project ) ); ?></strong></span><span class="kv2ps-project-nav__arrow" aria-hidden="true">→</span>
+						</a>
+					<?php endif; ?>
+				</div>
+			</nav>
+			<?php
+		endif;
+		?>
+
+		<?php
 		$service_ids = wp_get_post_terms( $post_id, 'kv2_service', array( 'fields' => 'ids' ) );
 		$related_args = array(
 			'post_type'           => KV2PS_Post_Types::POST_TYPE,
@@ -172,6 +204,12 @@ while ( have_posts() ) :
 			'posts_per_page'      => 3,
 			'post__not_in'        => array( $post_id ),
 			'ignore_sticky_posts' => true,
+			'meta_query'          => array(
+				array(
+					'key'     => '_thumbnail_id',
+					'compare' => 'EXISTS',
+				),
+			),
 		);
 		if ( ! is_wp_error( $service_ids ) && $service_ids ) {
 			$related_args['tax_query'] = array(
@@ -185,7 +223,7 @@ while ( have_posts() ) :
 		$related = new WP_Query( $related_args );
 		if ( $related->have_posts() ) :
 			?>
-			<section class="kv2ps-related" aria-labelledby="kv2ps-related-title"><div class="kv2ps-container"><h2 id="kv2ps-related-title"><?php esc_html_e( 'D’autres réalisations', 'kv2-portfolio-studio' ); ?></h2><div class="kv2ps-grid kv2ps-cols-3">
+			<section class="kv2ps-related" aria-labelledby="kv2ps-related-title"><div class="kv2ps-container"><div class="kv2ps-related__header"><div><span class="kv2ps-eyebrow"><?php esc_html_e( 'À découvrir ensuite', 'kv2-portfolio-studio' ); ?></span><h2 id="kv2ps-related-title"><?php esc_html_e( 'D’autres réalisations', 'kv2-portfolio-studio' ); ?></h2><?php if ( $service_terms && ! is_wp_error( $service_terms ) ) : ?><p><?php esc_html_e( 'Une sélection dans les mêmes catégories que ce projet.', 'kv2-portfolio-studio' ); ?></p><?php endif; ?></div><?php $archive_url = get_post_type_archive_link( KV2PS_Post_Types::POST_TYPE ); if ( $archive_url ) : ?><a class="kv2ps-related__all" href="<?php echo esc_url( $archive_url ); ?>"><?php esc_html_e( 'Toutes les réalisations', 'kv2-portfolio-studio' ); ?> <span aria-hidden="true">→</span></a><?php endif; ?></div><div class="kv2ps-grid kv2ps-layout-masonry kv2ps-cols-3 kv2ps-ratio-auto kv2ps-card-style-classic">
 			<?php while ( $related->have_posts() ) : $related->the_post(); KV2PS_Plugin::instance()->render_card(); endwhile; ?>
 			</div></div></section>
 			<?php
