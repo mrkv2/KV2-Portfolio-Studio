@@ -21,8 +21,11 @@ final class KV2PS_Plugin {
 		add_action( 'pre_get_posts', array( $this, 'configure_archive_query' ) );
 		add_filter( 'template_include', array( $this, 'template_include' ) );
 		add_shortcode( 'kv2_portfolio', array( $this, 'portfolio_shortcode' ) );
+		add_action( 'update_option_kv2ps_settings', array( __CLASS__, 'maybe_flush_routing_rules' ), 10, 3 );
 
 		KV2PS_Image_Metadata::init();
+		KV2PS_Compatibility::init();
+		KV2PS_SEO::init();
 		KV2PS_Schema::init();
 		KV2PS_Redirects::init();
 
@@ -94,8 +97,12 @@ final class KV2PS_Plugin {
 
 		if ( version_compare( $installed_version, '1.1.6', '<' ) ) {
 			$defaults = self::default_settings();
-			$settings['phone']               = '04 11 93 96 29';
-			$settings['ctc_trigger']         = 'ctc_greetings';
+			if ( ! isset( $settings['phone'] ) ) {
+				$settings['phone'] = $defaults['phone'];
+			}
+			if ( ! isset( $settings['ctc_trigger'] ) ) {
+				$settings['ctc_trigger'] = 'ctc_greetings';
+			}
 
 			if ( empty( $settings['cta_title'] ) || 'Vous avez un projet similaire ?' === $settings['cta_title'] ) {
 				$settings['cta_title'] = $defaults['cta_title'];
@@ -110,20 +117,51 @@ final class KV2PS_Plugin {
 			}
 		}
 
+		if ( version_compare( $installed_version, '1.1.7', '<' ) ) {
+			$defaults = self::default_settings();
+			foreach ( array( 'portfolio_seo_title', 'portfolio_meta_description', 'redirect_archive_to_portfolio' ) as $key ) {
+				if ( ! isset( $settings[ $key ] ) ) {
+					$settings[ $key ] = $defaults[ $key ];
+				}
+			}
+			if ( empty( $settings['archive_title'] ) || 'Nos réalisations' === $settings['archive_title'] ) {
+				$settings['archive_title'] = $defaults['archive_title'];
+			}
+			$settings['rank_math_schema'] = '1';
+		}
+
+		if ( version_compare( $installed_version, '1.1.8', '<' ) ) {
+			$defaults = self::default_settings();
+			foreach ( array( 'routing_mode', 'single_slug', 'legacy_shortcode_alias' ) as $key ) {
+				if ( ! isset( $settings[ $key ] ) ) {
+					$settings[ $key ] = $defaults[ $key ];
+				}
+			}
+		}
+
 		update_option( 'kv2ps_settings', $settings );
 		update_option( 'kv2ps_version', KV2PS_VERSION );
 	}
 
 	public static function default_settings() {
+		$protected_page = self::detect_published_page( 'realisations' );
+		$existing_page  = $protected_page ?: self::detect_published_page( 'realisation-tapisserie' );
+		$site_name      = get_bloginfo( 'name' );
 		return array(
-			'archive_title'              => 'Nos réalisations',
+			'archive_title'              => 'Nos réalisations de tapisserie d’ameublement',
 			'archive_intro'              => '',
-			'portfolio_page_url'         => home_url( '/realisation-tapisserie/' ),
+			'portfolio_page_url'         => $existing_page ?: home_url( '/realisation-tapisserie/' ),
+			'portfolio_seo_title'        => 'Réalisations de tapisserie d’ameublement | ' . $site_name,
+			'portfolio_meta_description' => 'Découvrez nos réalisations de tapisserie d’ameublement : fauteuils, chaises et canapés restaurés, cannage, rempaillage et réfection complète.',
+			'routing_mode'               => $protected_page ? 'existing_page' : 'standard',
+			'single_slug'                => 'realisation',
+			'redirect_archive_to_portfolio' => $protected_page ? '0' : '1',
+			'legacy_shortcode_alias'     => '0',
 			'contact_url'                => home_url( '/contact/' ),
-			'phone'                      => '04 11 93 96 29',
+			'phone'                      => '',
 			'whatsapp'                   => '',
 			'accent_color'               => '#9b6b43',
-			'rank_math_schema'           => '0',
+			'rank_math_schema'           => '1',
 			'image_schema'               => '1',
 			'archive_layout'             => 'masonry',
 			'archive_columns'            => '3',
@@ -158,13 +196,40 @@ final class KV2PS_Plugin {
 		);
 	}
 
+	private static function detect_published_page( $path ) {
+		if ( ! function_exists( 'get_page_by_path' ) || ! function_exists( 'get_permalink' ) ) {
+			return '';
+		}
+		$page = get_page_by_path( $path, OBJECT, 'page' );
+		if ( $page instanceof WP_Post && 'publish' === $page->post_status ) {
+			return (string) get_permalink( $page->ID );
+		}
+		return '';
+	}
+
+	public static function maybe_flush_routing_rules( $old_value, $new_value, $option ) {
+		unset( $option );
+		$old_value = is_array( $old_value ) ? $old_value : array();
+		$new_value = is_array( $new_value ) ? $new_value : array();
+		foreach ( array( 'routing_mode', 'single_slug' ) as $key ) {
+			if ( (string) ( isset( $old_value[ $key ] ) ? $old_value[ $key ] : '' ) !== (string) ( isset( $new_value[ $key ] ) ? $new_value[ $key ] : '' ) ) {
+				KV2PS_Post_Types::register();
+				flush_rewrite_rules();
+				return;
+			}
+		}
+	}
+
 	public static function deactivate() {
 		flush_rewrite_rules();
 	}
 
 	public function enqueue_frontend_assets() {
 		global $post;
-		$has_shortcode = is_singular() && $post instanceof WP_Post && has_shortcode( $post->post_content, 'kv2_portfolio' );
+		$has_shortcode = is_singular() && $post instanceof WP_Post && (
+			has_shortcode( $post->post_content, 'kv2_portfolio' )
+			|| ( KV2PS_Compatibility::legacy_alias_registered() && has_shortcode( $post->post_content, 'wp_portfolio' ) )
+		);
 		if ( is_singular( KV2PS_Post_Types::POST_TYPE ) || is_post_type_archive( KV2PS_Post_Types::POST_TYPE ) || is_tax( KV2PS_Post_Types::taxonomies() ) || $has_shortcode ) {
 			$this->enqueue_styles();
 		}
@@ -226,10 +291,12 @@ final class KV2PS_Plugin {
 		return $theme_template ? $theme_template : KV2PS_DIR . 'templates/' . $plugin_template;
 	}
 
-	public function portfolio_shortcode( $atts ) {
+	public function portfolio_shortcode( $atts, $content = null, $shortcode_tag = 'kv2_portfolio' ) {
+		unset( $content, $shortcode_tag );
 		$this->enqueue_styles();
 		$settings = self::settings();
-		$atts     = is_array( $atts ) ? $atts : array();
+		$atts     = KV2PS_Compatibility::normalize_legacy_atts( $atts );
+		$legacy_tax_query = KV2PS_Compatibility::legacy_tax_query( $atts );
 		$preset   = isset( $atts['preset'] ) ? sanitize_key( $atts['preset'] ) : 'classic';
 		$defaults = 'settings' === $preset
 			? array(
@@ -258,9 +325,12 @@ final class KV2PS_Plugin {
 			array_merge(
 				$defaults,
 				array(
-				'preset'       => $preset,
-				'service'    => '',
-				'ville'      => '',
+					'preset'       => $preset,
+					'service'      => '',
+					'ville'        => '',
+					'show_heading' => 'auto',
+					'heading'      => '',
+					'intro'        => '',
 				)
 			),
 			$atts,
@@ -279,6 +349,9 @@ final class KV2PS_Plugin {
 		);
 
 		$tax_query = array();
+		if ( $legacy_tax_query ) {
+			$tax_query = $legacy_tax_query;
+		}
 		if ( $active_service ) {
 			$tax_query[] = array(
 				'taxonomy' => 'kv2_service',
@@ -303,8 +376,23 @@ final class KV2PS_Plugin {
 		$query   = new WP_Query( $args );
 		$display = self::sanitize_display_settings( $atts );
 		$key     = 'shortcode-' . substr( md5( wp_json_encode( array_diff_key( $atts, array( 'kv2ps_page' => '' ) ) ) ), 0, 10 );
+		$heading_mode = strtolower( trim( (string) $atts['show_heading'] ) );
+		$show_heading = 'auto' === $heading_mode
+			? KV2PS_SEO::is_primary_portfolio_page() && ! KV2PS_SEO::page_has_h1()
+			: self::enabled( $heading_mode );
+		$heading      = trim( sanitize_text_field( $atts['heading'] ) );
+		$heading      = $heading ?: trim( (string) $settings['archive_title'] );
+		$intro        = trim( wp_kses_post( $atts['intro'] ) );
+		$intro        = $intro ?: trim( (string) $settings['archive_intro'] );
 
 		ob_start();
+		if ( $show_heading && $heading ) {
+			echo '<header class="kv2ps-shortcode-header"><div class="kv2ps-eyebrow">' . esc_html__( 'Portfolio', 'kv2-portfolio-studio' ) . '</div><h1>' . esc_html( $heading ) . '</h1>';
+			if ( $intro ) {
+				echo '<div class="kv2ps-lead">' . wp_kses_post( wpautop( $intro ) ) . '</div>';
+			}
+			echo '</header>';
+		}
 		if ( $query->have_posts() ) {
 			$next_url = $paged < (int) $query->max_num_pages ? add_query_arg( 'kv2ps_page', $paged + 1 ) : '';
 			echo '<section class="kv2ps-collection" data-collection-key="' . esc_attr( $key ) . '" data-load-mode="' . esc_attr( $display['load_mode'] ) . '">';
@@ -322,15 +410,17 @@ final class KV2PS_Plugin {
 				$this->render_card();
 			}
 			echo '</div>';
-			self::render_collection_navigation(
-				$query->max_num_pages,
-				$paged,
-				$next_url,
-				array(
-					'base'   => str_replace( '999999999', '%#%', esc_url_raw( add_query_arg( 'kv2ps_page', '999999999' ) ) ),
-					'format' => '',
-				)
-			);
+			if ( 'none' !== $display['load_mode'] ) {
+				self::render_collection_navigation(
+					$query->max_num_pages,
+					$paged,
+					$next_url,
+					array(
+						'base'   => str_replace( '999999999', '%#%', esc_url_raw( add_query_arg( 'kv2ps_page', '999999999' ) ) ),
+						'format' => '',
+					)
+				);
+			}
 			echo '</section>';
 			if ( self::enabled( $atts['show_cta'] ) ) {
 				self::render_cta( 0 );
@@ -348,7 +438,7 @@ final class KV2PS_Plugin {
 		$layout   = isset( $values['layout'] ) && in_array( $values['layout'], array( 'grid', 'tiles', 'masonry' ), true ) ? $values['layout'] : $settings['archive_layout'];
 		$ratio    = isset( $values['image_ratio'] ) && in_array( $values['image_ratio'], array( 'auto', '1-1', '4-3', '3-2', '16-9' ), true ) ? $values['image_ratio'] : $settings['archive_image_ratio'];
 		$card     = isset( $values['card_style'] ) && in_array( $values['card_style'], array( 'classic', 'minimal', 'elevated', 'overlay' ), true ) ? $values['card_style'] : $settings['archive_card_style'];
-		$load     = isset( $values['load_mode'] ) && in_array( $values['load_mode'], array( 'paged', 'button', 'infinite' ), true ) ? $values['load_mode'] : $settings['archive_load_mode'];
+		$load     = isset( $values['load_mode'] ) && in_array( $values['load_mode'], array( 'none', 'paged', 'button', 'infinite' ), true ) ? $values['load_mode'] : $settings['archive_load_mode'];
 		return array(
 			'layout'      => $layout,
 			'columns'     => max( 1, min( 3, isset( $values['columns'] ) ? absint( $values['columns'] ) : absint( $settings['archive_columns'] ) ) ),
@@ -570,9 +660,31 @@ final class KV2PS_Plugin {
 		$post_id       = get_the_ID();
 		$service_terms = get_the_terms( get_the_ID(), 'kv2_service' );
 		$service_terms = is_wp_error( $service_terms ) ? array() : (array) $service_terms;
-		$terms         = get_the_term_list( get_the_ID(), 'kv2_service', '', ', ' );
+		$term_labels   = array();
+		$service_tax   = get_taxonomy( 'kv2_service' );
+		foreach ( $service_terms as $service_term ) {
+			$term_url = get_term_meta( $service_term->term_id, '_kv2ps_landing_url', true );
+			if ( ! $term_url && $service_tax && $service_tax->publicly_queryable ) {
+				$term_url = get_term_link( $service_term );
+			}
+			$term_labels[] = $term_url && ! is_wp_error( $term_url )
+				? '<a href="' . esc_url( $term_url ) . '">' . esc_html( $service_term->name ) . '</a>'
+				: esc_html( $service_term->name );
+		}
+		$terms         = implode( ', ', $term_labels );
 		$service_slugs = implode( ' ', wp_list_pluck( $service_terms, 'slug' ) );
 		$search_text   = implode( ' ', array( get_the_title(), get_the_excerpt(), wp_strip_all_tags( $terms ) ) );
+		$lightbox_labels = array();
+		foreach ( KV2PS_Post_Types::taxonomies() as $taxonomy ) {
+			$taxonomy_terms = get_the_terms( $post_id, $taxonomy );
+			if ( is_wp_error( $taxonomy_terms ) || ! $taxonomy_terms ) {
+				continue;
+			}
+			foreach ( $taxonomy_terms as $taxonomy_term ) {
+				$lightbox_labels[] = $taxonomy_term->name;
+			}
+		}
+		$lightbox_meta = implode( ' • ', array_values( array_unique( array_filter( array_map( 'sanitize_text_field', $lightbox_labels ) ) ) ) );
 		$image_id      = get_post_thumbnail_id( $post_id );
 		if ( ! $image_id ) {
 			$after_ids  = KV2PS_Post_Types::sanitize_ids( get_post_meta( $post_id, '_kv2ps_after_images', true ) );
@@ -583,9 +695,13 @@ final class KV2PS_Plugin {
 			$source_id = absint( get_post_meta( $post_id, '_kv2ps_source_wp_portfolio_id', true ) );
 			$image_id  = $source_id ? KV2PS_Importer::find_source_image_id( $source_id ) : 0;
 		}
+		$destination = KV2PS_Compatibility::card_destination( $post_id, $image_id );
+		$link_attrs  = $destination['lightbox']
+			? ' data-kv2ps-lightbox="1" data-kv2ps-lightbox-title="' . esc_attr( get_the_title() ) . '" data-kv2ps-lightbox-meta="' . esc_attr( $lightbox_meta ) . '"'
+			: '';
 		?>
 		<article <?php post_class( 'kv2ps-card' ); ?> data-kv2ps-services="<?php echo esc_attr( $service_slugs ); ?>" data-kv2ps-search="<?php echo esc_attr( remove_accents( strtolower( $search_text ) ) ); ?>">
-			<a class="kv2ps-card__image" href="<?php the_permalink(); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Voir la réalisation : %s', 'kv2-portfolio-studio' ), get_the_title() ) ); ?>">
+			<a class="kv2ps-card__image" href="<?php echo esc_url( $destination['url'] ); ?>"<?php echo $link_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?> aria-label="<?php echo esc_attr( sprintf( __( 'Voir la réalisation : %s', 'kv2-portfolio-studio' ), get_the_title() ) ); ?>">
 				<?php
 				if ( $image_id ) {
 					$image_html = wp_get_attachment_image(
@@ -611,7 +727,7 @@ final class KV2PS_Plugin {
 				<?php if ( $terms ) : ?>
 					<div class="kv2ps-eyebrow"><?php echo wp_kses_post( $terms ); ?></div>
 				<?php endif; ?>
-				<h2 class="kv2ps-card__title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
+				<h2 class="kv2ps-card__title"><a href="<?php echo esc_url( $destination['url'] ); ?>"<?php echo $link_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><?php the_title(); ?></a></h2>
 				<?php if ( has_excerpt() ) : ?>
 					<p><?php echo esc_html( get_the_excerpt() ); ?></p>
 				<?php endif; ?>
