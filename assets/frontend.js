@@ -3,14 +3,6 @@
 
   document.documentElement.classList.add("kv2ps-js");
 
-  function normalize(value) {
-    return String(value || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .trim();
-  }
-
   function layoutMasonry(grid) {
     if (!grid || !grid.classList.contains("kv2ps-layout-masonry")) {
       return;
@@ -74,35 +66,25 @@
     });
   }
 
-  function applyCollectionFilters(collection) {
+  function refreshCollection(collection) {
     var toolbar = collection.querySelector(".kv2ps-toolbar");
     var grid = collection.querySelector(".kv2ps-grid");
-    if (!toolbar || !grid) {
+    if (!grid) {
       layoutMasonry(grid);
       return;
     }
 
-    var service = toolbar.dataset.activeFilter || "";
-    var input = toolbar.querySelector("input[type='search']");
-    var search = normalize(input ? input.value : "");
-    var visible = 0;
     var cards = grid.querySelectorAll(":scope > .kv2ps-card");
-
     cards.forEach(function (card) {
-      var services = (card.dataset.kv2psServices || "").split(/\s+/);
-      var matchesService = !service || services.indexOf(service) !== -1;
-      var matchesSearch = !search || normalize(card.dataset.kv2psSearch).indexOf(search) !== -1;
-      card.hidden = !(matchesService && matchesSearch);
-      if (!card.hidden) {
-        visible += 1;
-      }
+      card.hidden = false;
     });
 
-    var status = toolbar.querySelector(".kv2ps-filter-status");
+    var status = toolbar
+      ? toolbar.querySelector(".kv2ps-filter-status")
+      : null;
     if (status) {
-      status.textContent = visible
-        ? visible + " réalisation(s) correspondante(s) parmi les éléments chargés."
-        : "Aucune réalisation correspondante parmi les éléments chargés.";
+      status.textContent =
+        cards.length + " réalisation(s) chargée(s) pour la sélection courante.";
     }
     layoutMasonry(grid);
   }
@@ -114,40 +96,11 @@
     }
     toolbar.dataset.kv2psReady = "1";
 
-    toolbar.querySelectorAll("[data-kv2ps-filter]").forEach(function (filter) {
-      filter.addEventListener("click", function (event) {
-        event.preventDefault();
-        toolbar.dataset.activeFilter = filter.dataset.kv2psFilter || "";
-        toolbar.querySelectorAll("[data-kv2ps-filter]").forEach(function (item) {
-          var active = item === filter;
-          item.classList.toggle("is-active", active);
-          if (active) {
-            item.setAttribute("aria-current", "page");
-          } else {
-            item.removeAttribute("aria-current");
-          }
-        });
-        var hiddenService = toolbar.querySelector("input[name='kv2ps_service']");
-        if (hiddenService) {
-          hiddenService.value = toolbar.dataset.activeFilter;
-        }
-        applyCollectionFilters(collection);
-      });
-    });
-
-    var search = toolbar.querySelector("input[type='search']");
-    if (search) {
-      search.addEventListener("input", function () {
-        applyCollectionFilters(collection);
-      });
-    }
-    var form = toolbar.querySelector("form[role='search']");
-    if (form) {
-      form.addEventListener("submit", function (event) {
-        event.preventDefault();
-        applyCollectionFilters(collection);
-      });
-    }
+    /* Filters and search intentionally use their real URLs/forms. WordPress
+     * therefore queries the complete portfolio instead of filtering only the
+     * first batch already present in the DOM. This also keeps the controls
+     * usable without JavaScript and lets the load-more URL retain the active
+     * service/search parameters. */
   }
 
   function initializeComparison(root) {
@@ -160,6 +113,201 @@
       range.addEventListener("input", function () {
         comparison.style.setProperty("--kv2ps-position", range.value + "%");
       });
+    });
+  }
+
+  function initializeLightbox() {
+    if (!("HTMLDialogElement" in window)) {
+      return;
+    }
+
+    var dialog = document.createElement("dialog");
+    dialog.className = "kv2ps-lightbox";
+    dialog.setAttribute("aria-label", "Aperçu de la réalisation");
+    dialog.innerHTML =
+      '<button class="kv2ps-lightbox__close" type="button" aria-label="Fermer">×</button>' +
+      '<button class="kv2ps-lightbox__nav kv2ps-lightbox__nav--previous" type="button" aria-label="Réalisation précédente">‹</button>' +
+      '<figure><img alt=""><figcaption>' +
+      '<span class="kv2ps-lightbox__count"></span>' +
+      '<strong class="kv2ps-lightbox__title"></strong>' +
+      '<span class="kv2ps-lightbox__meta"></span>' +
+      "</figcaption></figure>" +
+      '<button class="kv2ps-lightbox__nav kv2ps-lightbox__nav--next" type="button" aria-label="Réalisation suivante">›</button>' +
+      '<p class="kv2ps-lightbox__status" aria-live="polite"></p>';
+    document.body.appendChild(dialog);
+
+    var image = dialog.querySelector("img");
+    var count = dialog.querySelector(".kv2ps-lightbox__count");
+    var title = dialog.querySelector(".kv2ps-lightbox__title");
+    var meta = dialog.querySelector(".kv2ps-lightbox__meta");
+    var status = dialog.querySelector(".kv2ps-lightbox__status");
+    var close = dialog.querySelector(".kv2ps-lightbox__close");
+    var previous = dialog.querySelector(".kv2ps-lightbox__nav--previous");
+    var next = dialog.querySelector(".kv2ps-lightbox__nav--next");
+    var trigger = null;
+    var loading = false;
+    var pointerStartX = null;
+
+    function canonicalLink(link) {
+      var card = link ? link.closest(".kv2ps-card") : null;
+      return card
+        ? card.querySelector(".kv2ps-card__image[data-kv2ps-lightbox]") || link
+        : link;
+    }
+
+    function linksForCurrentCollection() {
+      var collection = trigger ? trigger.closest(".kv2ps-collection") : null;
+      var root = collection || document;
+      return Array.prototype.slice.call(
+        root.querySelectorAll(
+          ".kv2ps-card__image[data-kv2ps-lightbox]",
+        ),
+      );
+    }
+
+    function updateNavigationState() {
+      var links = linksForCurrentCollection();
+      var current = links.indexOf(trigger);
+      var collection = trigger ? trigger.closest(".kv2ps-collection") : null;
+      var canLoadMore = !!(
+        collection && collection.querySelector(".kv2ps-load-more")
+      );
+      count.textContent =
+        current >= 0
+          ? current + 1 + " / " + links.length + (canLoadMore ? "+" : "")
+          : "";
+      previous.disabled = loading || links.length < 2;
+      next.disabled = loading || (links.length < 2 && !canLoadMore);
+    }
+
+    function showLink(link) {
+      link = canonicalLink(link);
+      if (!link) {
+        return;
+      }
+      trigger = link;
+      image.src = link.href;
+      image.alt = link.dataset.kv2psLightboxTitle || "Réalisation";
+      title.textContent = link.dataset.kv2psLightboxTitle || "Réalisation";
+      meta.textContent = link.dataset.kv2psLightboxMeta || "";
+      meta.hidden = !meta.textContent;
+      status.textContent = "";
+      updateNavigationState();
+    }
+
+    function setLoading(value) {
+      loading = value;
+      dialog.classList.toggle("is-loading", value);
+      updateNavigationState();
+    }
+
+    function navigate(direction) {
+      if (!trigger || loading) {
+        return;
+      }
+      var links = linksForCurrentCollection();
+      var current = links.indexOf(trigger);
+      var target = current + direction;
+      if (target >= 0 && target < links.length) {
+        showLink(links[target]);
+        return;
+      }
+      if (direction < 0 && links.length) {
+        showLink(links[links.length - 1]);
+        return;
+      }
+
+      var collection = trigger.closest(".kv2ps-collection");
+      var loadMore = collection
+        ? collection.querySelector(".kv2ps-load-more")
+        : null;
+      if (!loadMore) {
+        if (links.length) {
+          showLink(links[0]);
+        }
+        return;
+      }
+
+      setLoading(true);
+      status.textContent = "Chargement des réalisations suivantes…";
+      var loaded = function () {
+        collection.removeEventListener("kv2ps:collection-error", failed);
+        setLoading(false);
+        var refreshed = linksForCurrentCollection();
+        var refreshedIndex = refreshed.indexOf(trigger);
+        if (refreshed[refreshedIndex + 1]) {
+          showLink(refreshed[refreshedIndex + 1]);
+        } else {
+          status.textContent = "Toutes les réalisations sont affichées.";
+        }
+      };
+      var failed = function () {
+        collection.removeEventListener("kv2ps:collection-updated", loaded);
+        setLoading(false);
+        status.textContent =
+          "Le chargement a échoué. Fermez la visionneuse puis utilisez Voir plus.";
+      };
+      collection.addEventListener("kv2ps:collection-updated", loaded, {
+        once: true,
+      });
+      collection.addEventListener("kv2ps:collection-error", failed, {
+        once: true,
+      });
+      loadMore.click();
+    }
+
+    close.addEventListener("click", function () {
+      dialog.close();
+    });
+    previous.addEventListener("click", function () {
+      navigate(-1);
+    });
+    next.addEventListener("click", function () {
+      navigate(1);
+    });
+    dialog.addEventListener("click", function (event) {
+      if (event.target === dialog) {
+        dialog.close();
+      }
+    });
+    dialog.addEventListener("keydown", function (event) {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        navigate(-1);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        navigate(1);
+      }
+    });
+    dialog.addEventListener("pointerdown", function (event) {
+      pointerStartX = event.clientX;
+    });
+    dialog.addEventListener("pointerup", function (event) {
+      if (pointerStartX === null) {
+        return;
+      }
+      var distance = event.clientX - pointerStartX;
+      pointerStartX = null;
+      if (Math.abs(distance) < 60) {
+        return;
+      }
+      navigate(distance > 0 ? -1 : 1);
+    });
+    dialog.addEventListener("close", function () {
+      image.removeAttribute("src");
+      if (trigger) {
+        trigger.focus();
+      }
+    });
+    document.addEventListener("click", function (event) {
+      var link = event.target.closest("a[data-kv2ps-lightbox]");
+      if (!link) {
+        return;
+      }
+      event.preventDefault();
+      showLink(link);
+      dialog.showModal();
+      next.focus();
     });
   }
 
@@ -221,7 +369,7 @@
           grid.appendChild(fragment);
 
           watchCardImages(grid, cards);
-          applyCollectionFilters(collection);
+          refreshCollection(collection);
 
           var incomingButton = incoming.querySelector(".kv2ps-load-more");
           if (incomingButton && incomingButton.dataset.nextUrl) {
@@ -238,6 +386,12 @@
               ? cards.length + " réalisation(s) supplémentaire(s) affichée(s)."
               : "Toutes les réalisations sont affichées.";
           }
+          collection.dispatchEvent(
+            new CustomEvent("kv2ps:collection-updated", {
+              bubbles: true,
+              detail: { added: cards.length },
+            }),
+          );
         })
         .catch(function () {
           button.disabled = false;
@@ -246,6 +400,9 @@
             status.textContent =
               "Le chargement a échoué. Utilisez la pagination située juste au-dessus.";
           }
+          collection.dispatchEvent(
+            new CustomEvent("kv2ps:collection-error", { bubbles: true }),
+          );
         })
         .finally(function () {
           collection.removeAttribute("aria-busy");
@@ -268,6 +425,7 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
+	initializeLightbox();
     initializeComparison(document);
     document.querySelectorAll(".kv2ps-collection").forEach(function (collection) {
       var grid = collection.querySelector(".kv2ps-grid");
@@ -275,7 +433,7 @@
       initializeCollection(collection);
       if (grid) {
         watchCardImages(grid, grid.querySelectorAll(":scope > .kv2ps-card"));
-        applyCollectionFilters(collection);
+        refreshCollection(collection);
       }
     });
     window.addEventListener("resize", function () {

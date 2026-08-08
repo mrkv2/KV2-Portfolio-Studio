@@ -26,9 +26,15 @@ while ( have_posts() ) :
 						if ( $service_terms && ! is_wp_error( $service_terms ) ) {
 							echo '<nav class="kv2ps-taxonomy-chips" aria-label="' . esc_attr__( 'Catégories de la réalisation', 'kv2-portfolio-studio' ) . '">';
 							foreach ( $service_terms as $service_term ) {
-								$service_url = get_term_link( $service_term );
-								if ( ! is_wp_error( $service_url ) ) {
+								$service_url = get_term_meta( $service_term->term_id, '_kv2ps_landing_url', true );
+								$service_tax = get_taxonomy( 'kv2_service' );
+								if ( ! $service_url && $service_tax && $service_tax->publicly_queryable ) {
+									$service_url = get_term_link( $service_term );
+								}
+								if ( $service_url && ! is_wp_error( $service_url ) ) {
 									echo '<a href="' . esc_url( $service_url ) . '">' . esc_html( $service_term->name ) . '</a>';
+								} else {
+									echo '<span>' . esc_html( $service_term->name ) . '</span>';
 								}
 							}
 							echo '</nav>';
@@ -142,8 +148,10 @@ while ( have_posts() ) :
 						<?php
 						$links = array();
 						foreach ( $terms as $term ) {
-							$url     = get_term_meta( $term->term_id, '_kv2ps_landing_url', true );
-							$url     = $url ?: get_term_link( $term );
+							$url = get_term_meta( $term->term_id, '_kv2ps_landing_url', true );
+							if ( ! $url && $taxonomy_object->publicly_queryable ) {
+								$url = get_term_link( $term );
+							}
 							$links[] = is_wp_error( $url ) ? esc_html( $term->name ) : '<a href="' . esc_url( $url ) . '">' . esc_html( $term->name ) . '</a>';
 						}
 						echo wp_kses_post( implode( ', ', $links ) );
@@ -172,10 +180,8 @@ while ( have_posts() ) :
 		</article>
 
 		<?php
-		$previous_project = get_previous_post( true, '', 'kv2_service' );
-		$next_project     = get_next_post( true, '', 'kv2_service' );
-		$previous_project = $previous_project ?: get_previous_post();
-		$next_project     = $next_project ?: get_next_post();
+		$previous_project = KV2PS_Compatibility::adjacent_case_study( $post_id, 'previous' );
+		$next_project     = KV2PS_Compatibility::adjacent_case_study( $post_id, 'next' );
 		if ( $previous_project || $next_project ) :
 			?>
 			<nav class="kv2ps-project-nav" aria-label="<?php esc_attr_e( 'Naviguer entre les réalisations', 'kv2-portfolio-studio' ); ?>">
@@ -205,9 +211,15 @@ while ( have_posts() ) :
 			'post__not_in'        => array( $post_id ),
 			'ignore_sticky_posts' => true,
 			'meta_query'          => array(
+				'relation' => 'AND',
 				array(
 					'key'     => '_thumbnail_id',
 					'compare' => 'EXISTS',
+				),
+				array(
+					'relation' => 'OR',
+					array( 'key' => '_kv2ps_publication_mode', 'compare' => 'NOT EXISTS' ),
+					array( 'key' => '_kv2ps_publication_mode', 'value' => KV2PS_Compatibility::MODE_GALLERY, 'compare' => '!=' ),
 				),
 			),
 		);

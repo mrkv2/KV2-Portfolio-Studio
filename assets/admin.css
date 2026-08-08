@@ -9,6 +9,11 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 24px;
 }
+.kv2ps-section-title {
+  border-top: 1px solid #dcdcde;
+  margin: 24px 0 4px;
+  padding-top: 20px;
+}
 .kv2ps-field label,
 .kv2ps-field textarea,
 .kv2ps-field input {
@@ -23,6 +28,11 @@
   border-top: 1px solid #dcdcde;
   margin-top: 18px;
   padding-top: 10px;
+}
+.kv2ps-gallery-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .kv2ps-gallery-preview {
   display: flex;
@@ -137,6 +147,10 @@
 .kv2ps-checklist .is-missing {
   color: #8a2424;
 }
+.kv2ps-checklist .is-missing a {
+  color: inherit;
+  font-weight: 600;
+}
 .kv2ps-prompt-box,
 .kv2ps-output {
   margin-top: 18px;
@@ -144,6 +158,7 @@
 @media (max-width: 900px) {
   .kv2ps-tools-grid,
   .kv2ps-metabox-grid,
+  .kv2ps-gallery-grid,
   .kv2ps-inline-fields {
     grid-template-columns: 1fr;
   }

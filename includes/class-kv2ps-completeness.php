@@ -43,7 +43,7 @@ final class KV2PS_Completeness {
 		<p class="kv2ps-score-summary"><strong><?php echo esc_html( $report['score'] ); ?>%</strong> — <?php echo esc_html( $report['score'] >= 85 ? __( 'prête à publier', 'kv2-portfolio-studio' ) : __( 'à compléter', 'kv2-portfolio-studio' ) ); ?></p>
 		<ul class="kv2ps-checklist">
 			<?php foreach ( $report['checks'] as $check ) : ?>
-				<li class="<?php echo esc_attr( $check['ok'] ? 'is-ok' : 'is-missing' ); ?>"><span aria-hidden="true"><?php echo $check['ok'] ? '✓' : '○'; ?></span> <?php echo esc_html( $check['label'] ); ?></li>
+				<li class="<?php echo esc_attr( $check['ok'] ? 'is-ok' : 'is-missing' ); ?>"><span aria-hidden="true"><?php echo $check['ok'] ? '✓' : '○'; ?></span> <?php if ( ! $check['ok'] && ! empty( $check['target'] ) ) : ?><a href="<?php echo esc_attr( $check['target'] ); ?>"><?php echo esc_html( $check['label'] ); ?></a><?php else : ?><?php echo esc_html( $check['label'] ); ?><?php endif; ?></li>
 			<?php endforeach; ?>
 		</ul>
 		<?php
@@ -54,11 +54,11 @@ final class KV2PS_Completeness {
 			array( 'label' => __( 'Titre', 'kv2-portfolio-studio' ), 'ok' => (bool) get_the_title( $post_id ), 'weight' => 8 ),
 			array( 'label' => __( 'Extrait', 'kv2-portfolio-studio' ), 'ok' => (bool) get_post_field( 'post_excerpt', $post_id ), 'weight' => 8 ),
 			array( 'label' => __( 'Image principale', 'kv2-portfolio-studio' ), 'ok' => (bool) get_post_thumbnail_id( $post_id ), 'weight' => 10 ),
-			array( 'label' => __( 'Besoin du client', 'kv2-portfolio-studio' ), 'ok' => (bool) get_post_meta( $post_id, '_kv2ps_problem', true ), 'weight' => 10 ),
-			array( 'label' => __( 'Intervention', 'kv2-portfolio-studio' ), 'ok' => (bool) get_post_meta( $post_id, '_kv2ps_intervention', true ), 'weight' => 10 ),
-			array( 'label' => __( 'Résultat', 'kv2-portfolio-studio' ), 'ok' => (bool) get_post_meta( $post_id, '_kv2ps_result', true ), 'weight' => 10 ),
-			array( 'label' => __( 'Photos avant', 'kv2-portfolio-studio' ), 'ok' => (bool) KV2PS_Post_Types::sanitize_ids( get_post_meta( $post_id, '_kv2ps_before_images', true ) ), 'weight' => 8 ),
-			array( 'label' => __( 'Photos après', 'kv2-portfolio-studio' ), 'ok' => (bool) KV2PS_Post_Types::sanitize_ids( get_post_meta( $post_id, '_kv2ps_after_images', true ) ), 'weight' => 8 ),
+			array( 'label' => __( 'Besoin du client', 'kv2-portfolio-studio' ), 'ok' => (bool) get_post_meta( $post_id, '_kv2ps_problem', true ), 'weight' => 10, 'target' => '#kv2ps-problem' ),
+			array( 'label' => __( 'Intervention', 'kv2-portfolio-studio' ), 'ok' => (bool) get_post_meta( $post_id, '_kv2ps_intervention', true ), 'weight' => 10, 'target' => '#kv2ps-intervention' ),
+			array( 'label' => __( 'Résultat', 'kv2-portfolio-studio' ), 'ok' => (bool) get_post_meta( $post_id, '_kv2ps_result', true ), 'weight' => 10, 'target' => '#kv2ps-result' ),
+			array( 'label' => __( 'Photos avant', 'kv2-portfolio-studio' ), 'ok' => (bool) KV2PS_Post_Types::sanitize_ids( get_post_meta( $post_id, '_kv2ps_before_images', true ) ), 'weight' => 8, 'target' => '#kv2ps-gallery-before' ),
+			array( 'label' => __( 'Photos après', 'kv2-portfolio-studio' ), 'ok' => (bool) KV2PS_Post_Types::sanitize_ids( get_post_meta( $post_id, '_kv2ps_after_images', true ) ), 'weight' => 8, 'target' => '#kv2ps-gallery-after' ),
 			array( 'label' => __( 'Service', 'kv2-portfolio-studio' ), 'ok' => has_term( '', 'kv2_service', $post_id ), 'weight' => 7 ),
 			array( 'label' => __( 'Ville ou confidentialité', 'kv2-portfolio-studio' ), 'ok' => has_term( '', 'kv2_ville', $post_id ) || (bool) get_post_meta( $post_id, '_kv2ps_confidential', true ), 'weight' => 7 ),
 			array( 'label' => __( 'ALT des images', 'kv2-portfolio-studio' ), 'ok' => self::images_have_alt( $post_id ), 'weight' => 7 ),

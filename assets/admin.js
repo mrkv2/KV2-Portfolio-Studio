@@ -79,6 +79,17 @@
     $(".kv2ps-source-checkbox:not(:disabled)").prop("checked", this.checked);
   });
 
+	$("#kv2ps-select-published").on("click", function () {
+		$(".kv2ps-source-checkbox:not(:disabled)").each(function () {
+			this.checked = $(this).data("source-status") === "publish";
+		});
+		$("#kv2ps-select-all").prop("checked", false);
+	});
+
+	$(document).on("click", ".kv2ps-use-destination-candidate", function () {
+		$("#kv2ps-destination-url").val($(this).data("candidate") || "").trigger("change");
+	});
+
   $(document).on("click", ".kv2ps-download-json", function () {
     var source = $(this)
       .closest(".kv2ps-output")

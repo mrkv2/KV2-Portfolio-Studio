@@ -3,7 +3,7 @@ Contributors: kv2
 Tags: portfolio, seo, image metadata, exif, rank math
 Requires at least: 6.5
 Requires PHP: 7.4
-Stable tag: 1.1.6
+Stable tag: 1.1.12
 License: Proprietary
 
 Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonnées d’images avec ChatGPT.
@@ -20,6 +20,46 @@ Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonné
 Le plugin ne supprime aucune donnée à la désinstallation. Le module EXIF lit le fichier original mais ne le réécrit pas dans la version 1.1.
 
 == Changelog ==
+
+= 1.1.12 =
+* Récupère toutes les images présentes dans une même métadonnée WP Portfolio, y compris les tableaux imbriqués, fragments HTML et listes d’URL.
+* Ajoute un contrat de migration qui protège les imports multi-images contre les régressions.
+* Aligne le test de mise à niveau sur la version réelle du plugin afin que les futures releases restent vérifiables par la CI.
+
+= 1.1.11 =
+* Rétablit les zones de saisie manquantes pour le besoin client, l’état initial, les contraintes, l’intervention, le résultat et les matières.
+* Place les sélecteurs Photos avant/après immédiatement sous le contenu éditorial.
+* Rend les principaux éléments manquants de la checklist cliquables pour accéder directement au champ concerné.
+* Clarifie la différence entre une carte de galerie et une étude de cas complète indexable.
+
+= 1.1.10 =
+* Transforme la visionneuse en galerie navigable avec flèches, clavier, geste tactile et compteur.
+* Charge automatiquement la série suivante lorsqu’on atteint la dernière image déjà présente dans la page.
+* Affiche sous l’image le titre et les catégories réellement disponibles : service, ville, meuble, style et technique.
+* Améliore l’accessibilité, les états de chargement et le rendu mobile de la visionneuse.
+
+= 1.1.9 =
+* Applique les filtres et la recherche à l’ensemble du portfolio côté serveur, pas seulement aux cartes déjà chargées.
+* Conserve les paramètres de filtre lors du chargement « Voir plus » afin que chaque clic affiche réellement de nouveaux résultats pertinents.
+* Ajoute un diagnostic explicite des contenus et images réellement disponibles dans WP Portfolio.
+* Ajoute une resynchronisation sûre qui replace les imports vides en galerie noindex sans modifier les études de cas déjà enrichies.
+* Préserve toutes les images WP Portfolio reconnues dans les métadonnées d’une source.
+
+= 1.1.8 =
+* Ajoute un mode site existant qui protège /realisations/ et ses pages enfants.
+* Sépare les études de cas indexables des éléments de galerie noindex exclus des sitemaps.
+* Importe jusqu’à 2 000 sources et mappe les taxonomies WP Portfolio vers KV2.
+* Traduit les attributs des anciens shortcodes et fournit un alias opt-in qui ne remplace jamais WP Portfolio lorsqu’il est actif.
+* Ajoute une destination éditoriale interne et une visionneuse accessible pour les cartes de galerie.
+* Retire les valeurs Montpellier et téléphone propres à un site des réglages de nouvelle installation.
+
+= 1.1.7 =
+* Consacre la page avec shortcode comme catalogue SEO principal et redirige l’archive technique en 301.
+* Ajoute un H1 automatique uniquement lorsqu’aucun H1 n’existe déjà dans la page ou Elementor.
+* Ajoute les titres et descriptions de secours Rank Math, les canonicals paginés et le noindex des filtres temporaires.
+* Active CreativeWork sans dupliquer une entité déjà présente dans le graphe Rank Math.
+* Durcit les imports JSON, les permissions REST et le nettoyage des contenus importés depuis WP Portfolio.
+* Ajoute des contrôles automatisés et une intégration continue PHP 7.4/8.3.
 
 = 1.1.6 =
 * Enrichit le CTA global et les fiches avec téléphone cliquable, parcours client et points forts.

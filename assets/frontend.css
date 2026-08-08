@@ -60,6 +60,23 @@
   line-height: 1.6;
   max-width: 62ch;
 }
+.kv2ps-shortcode-header {
+  box-sizing: border-box;
+  margin: 0 0 clamp(30px, 4vw, 48px);
+  padding: clamp(8px, 2vw, 20px) 0 0;
+  width: 100%;
+}
+.kv2ps-shortcode-header h1 {
+  color: var(--kv2ps-ink);
+  font-size: clamp(1.9rem, 3.2vw, 2.75rem);
+  letter-spacing: -0.03em;
+  line-height: 1.14;
+  margin: 0.22em 0 0;
+  overflow-wrap: anywhere;
+}
+.kv2ps-shortcode-header .kv2ps-lead {
+  margin: 14px 0 0;
+}
 .kv2ps-hero__media {
   margin: 0;
 }
@@ -81,7 +98,8 @@
   gap: 8px;
   margin-bottom: 18px;
 }
-.kv2ps-taxonomy-chips a {
+.kv2ps-taxonomy-chips a,
+.kv2ps-taxonomy-chips span {
   background: rgba(155, 107, 67, 0.1);
   border: 1px solid rgba(155, 107, 67, 0.28);
   border-radius: 999px;
@@ -969,5 +987,168 @@
   .kv2ps-js .kv2ps-layout-masonry.kv2ps-masonry-ready .kv2ps-card {
     animation: none;
     transition: none;
+  }
+}
+
+.kv2ps-lightbox {
+  background: transparent;
+  border: 0;
+  color: #fff;
+  height: 100dvh;
+  margin: auto;
+  max-height: none;
+  max-width: none;
+  padding: clamp(18px, 4vw, 52px);
+  width: 100vw;
+}
+.kv2ps-lightbox::backdrop {
+  background: rgb(10 10 10 / 0.92);
+}
+.kv2ps-lightbox figure {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: 100%;
+  justify-content: center;
+  margin: 0;
+}
+.kv2ps-lightbox img {
+  display: block;
+  max-height: calc(100dvh - 190px);
+  max-width: min(100%, 1500px);
+  object-fit: contain;
+}
+.kv2ps-lightbox figcaption {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-width: min(920px, calc(100vw - 150px));
+  text-align: center;
+}
+.kv2ps-lightbox__count {
+  color: rgb(255 255 255 / 0.66);
+  font-size: 0.76rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.kv2ps-lightbox__title {
+  color: #fff;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  line-height: 1.35;
+}
+.kv2ps-lightbox__meta {
+  color: rgb(255 255 255 / 0.72);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.kv2ps-lightbox__close {
+  align-items: center;
+  background: #fff;
+  border: 0;
+  border-radius: 999px;
+  color: #111;
+  cursor: pointer;
+  display: flex;
+  font-size: 1.75rem;
+  height: 44px;
+  justify-content: center;
+  line-height: 1;
+  position: fixed;
+  right: max(18px, env(safe-area-inset-right));
+  top: max(18px, env(safe-area-inset-top));
+  width: 44px;
+  z-index: 2;
+}
+.kv2ps-lightbox__close:focus-visible {
+  outline: 3px solid var(--kv2ps-accent, #9b6b43);
+  outline-offset: 3px;
+}
+.kv2ps-lightbox__nav {
+  align-items: center;
+  background: rgb(255 255 255 / 0.94);
+  border: 0;
+  border-radius: 999px;
+  color: #111;
+  cursor: pointer;
+  display: flex;
+  font-size: 2.3rem;
+  height: 54px;
+  justify-content: center;
+  line-height: 1;
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: background 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+  width: 54px;
+  z-index: 2;
+}
+.kv2ps-lightbox__nav--previous {
+  left: max(18px, env(safe-area-inset-left));
+}
+.kv2ps-lightbox__nav--next {
+  right: max(18px, env(safe-area-inset-right));
+}
+.kv2ps-lightbox__nav:hover,
+.kv2ps-lightbox__nav:focus-visible {
+  background: #fff;
+  outline: 3px solid var(--kv2ps-accent, #9b6b43);
+  outline-offset: 3px;
+}
+.kv2ps-lightbox__nav--previous:hover {
+  transform: translate(-3px, -50%);
+}
+.kv2ps-lightbox__nav--next:hover {
+  transform: translate(3px, -50%);
+}
+.kv2ps-lightbox__nav:disabled {
+  cursor: wait;
+  opacity: 0.38;
+}
+.kv2ps-lightbox__status {
+  bottom: max(12px, env(safe-area-inset-bottom));
+  color: rgb(255 255 255 / 0.78);
+  font-size: 0.85rem;
+  left: 50%;
+  margin: 0;
+  position: fixed;
+  text-align: center;
+  transform: translateX(-50%);
+  width: min(90vw, 620px);
+}
+
+@media (max-width: 620px) {
+  .kv2ps-lightbox {
+    padding: 70px 16px 92px;
+  }
+  .kv2ps-lightbox img {
+    max-height: calc(100dvh - 260px);
+  }
+  .kv2ps-lightbox figcaption {
+    max-width: calc(100vw - 32px);
+  }
+  .kv2ps-lightbox__nav {
+    bottom: max(24px, env(safe-area-inset-bottom));
+    height: 48px;
+    top: auto;
+    transform: none;
+    width: 48px;
+  }
+  .kv2ps-lightbox__nav--previous {
+    left: calc(50% - 62px);
+  }
+  .kv2ps-lightbox__nav--next {
+    right: calc(50% - 62px);
+  }
+  .kv2ps-lightbox__nav--previous:hover {
+    transform: translateX(-3px);
+  }
+  .kv2ps-lightbox__nav--next:hover {
+    transform: translateX(3px);
+  }
+  .kv2ps-lightbox__status {
+    bottom: 82px;
   }
 }
