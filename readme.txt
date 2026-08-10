@@ -3,7 +3,7 @@ Contributors: kv2
 Tags: portfolio, seo, image metadata, exif, rank math
 Requires at least: 6.5
 Requires PHP: 7.4
-Stable tag: 1.1.16
+Stable tag: 1.1.17
 License: Proprietary
 
 Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonnées d’images avec ChatGPT.
@@ -20,6 +20,11 @@ Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonné
 Le plugin ne supprime aucune donnée à la désinstallation. Le module EXIF lit le fichier original mais ne le réécrit pas dans la version 1.1.
 
 == Changelog ==
+
+= 1.1.17 =
+* Adapte le nombre de colonnes à la largeur réelle du bloc portfolio, y compris dans Elementor.
+* Empêche le Masonry de compresser trois cartes minuscules dans un conteneur étroit.
+* Conserve trois colonnes sur les galeries suffisamment larges, deux en largeur intermédiaire et une sur les petits blocs.
 
 = 1.1.16 =
 * Remplace la saisie séparée des termes de ville par un bloc unique avec ville, département et code postal.

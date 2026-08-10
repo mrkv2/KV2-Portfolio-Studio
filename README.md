@@ -1,4 +1,4 @@
-# KV2 Portfolio Studio 1.1.16
+# KV2 Portfolio Studio 1.1.17
 
 Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio sans sacrifier le référencement ni les données existantes.
 
@@ -27,7 +27,7 @@ Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio 
 ## Installation
 
 1. Dans WordPress, ouvrir **Extensions → Ajouter une extension → Téléverser une extension**.
-2. Choisir `kv2-portfolio-studio-v1.1.16.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
+2. Choisir `kv2-portfolio-studio-v1.1.17.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
 3. Ouvrir **Réalisations → Réglages** et configurer l’affichage, Click to Chat, l’URL du formulaire et les droits des images.
 4. Dans Rank Math, vérifier que les études de cas indexables sont incluses au sitemap. Les éléments « Galerie uniquement » sont automatiquement exclus des sitemaps WordPress et Rank Math.
 5. Publier un projet test, puis contrôler l’affichage, le canonical et le JSON-LD avec Rich Snippet Sniper.
@@ -76,6 +76,8 @@ La V1.1.14 retire la largeur étroite héritée d’Astra sur les fiches individ
 La V1.1.15 rend les fiches réellement adaptatives aux informations disponibles : un ou deux blocs éditoriaux occupent correctement la largeur, une colonne absente n’est plus réservée et un groupe de photos seul reçoit un titre exact. La checklist se met à jour après l’enregistrement, distingue les indispensables des compléments facultatifs et les villes utilisent les suggestions natives de WordPress. Deux liens ramènent enfin vers la page portfolio configurée.
 
 La V1.1.16 regroupe la ville, le département et le code postal dans un seul bloc de localisation. Elle fiabilise la création et la réutilisation des villes, distingue les homonymes, raccorde l’import JSON au même mécanisme et étend la recherche publique sans exposer les lieux des projets confidentiels.
+
+La V1.1.17 calcule les colonnes du portfolio d’après la largeur réelle de la galerie et non celle de l’écran. Un shortcode placé dans un conteneur Elementor étroit passe donc automatiquement de trois à deux ou une colonne au lieu de produire de minuscules images.
 
 ## CTA intelligent et Click to Chat
 

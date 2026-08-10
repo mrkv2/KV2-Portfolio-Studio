@@ -26,8 +26,10 @@
       var requested = [1, 2, 3, 4].find(function (count) {
         return grid.classList.contains("kv2ps-cols-" + count);
       }) || 1;
-      var columns = window.innerWidth <= 620 ? 1 : window.innerWidth <= 900 ? Math.min(2, requested) : requested;
       var gap = 40;
+      var gridWidth = Math.max(0, grid.getBoundingClientRect().width || grid.clientWidth);
+      var maxColumnsByWidth = Math.max(1, Math.floor((gridWidth + gap) / 320));
+      var columns = Math.min(requested, maxColumnsByWidth);
       var width = (grid.clientWidth - gap * (columns - 1)) / columns;
       var heights = Array(columns).fill(0);
 

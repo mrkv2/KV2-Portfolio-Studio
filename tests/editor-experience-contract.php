@@ -5,6 +5,7 @@ $completeness = file_get_contents( $root . '/includes/class-kv2ps-completeness.p
 $post_types   = file_get_contents( $root . '/includes/class-kv2ps-post-types.php' );
 $admin        = file_get_contents( $root . '/includes/class-kv2ps-admin.php' );
 $admin_js     = file_get_contents( $root . '/assets/admin.js' );
+$frontend_js  = file_get_contents( $root . '/assets/frontend.js' );
 $template     = file_get_contents( $root . '/templates/single-kv2_realisation.php' );
 $css          = file_get_contents( $root . '/assets/frontend.css' );
 $errors       = array();
@@ -23,6 +24,9 @@ $contracts = array(
 	array( $template, 'kv2ps-project-layout--content-only', 'Content-only projects must not reserve an empty sidebar.' ),
 	array( $template, 'kv2ps-project-layout--sidebar-only', 'Metadata-only projects must not reserve an empty content column.' ),
 	array( $css, '.kv2ps-back-bar', 'The lower portfolio return link must have a dedicated accessible region.' ),
+	array( $css, 'container-type: inline-size', 'Portfolio columns must react to their actual container width.' ),
+	array( $frontend_js, 'grid.getBoundingClientRect().width', 'Masonry must measure its own container instead of the viewport.' ),
+	array( $frontend_js, 'maxColumnsByWidth', 'Masonry must cap columns before cards become too narrow.' ),
 );
 
 foreach ( $contracts as $contract ) {
