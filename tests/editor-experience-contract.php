@@ -27,6 +27,7 @@ $contracts = array(
 	array( $css, 'container-type: inline-size', 'Portfolio columns must react to their actual container width.' ),
 	array( $frontend_js, 'grid.getBoundingClientRect().width', 'Masonry must measure its own container instead of the viewport.' ),
 	array( $frontend_js, 'maxColumnsByWidth', 'Masonry must cap columns before cards become too narrow.' ),
+	array( $css, '.ast-separate-container .kv2ps-card.ast-article-single', 'Astra card padding must not shrink portfolio images.' ),
 );
 
 foreach ( $contracts as $contract ) {

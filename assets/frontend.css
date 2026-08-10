@@ -788,6 +788,10 @@
   background: #fff;
   border: 1px solid var(--kv2ps-line);
 }
+.ast-separate-container .kv2ps-card.ast-article-post,
+.ast-separate-container .kv2ps-card.ast-article-single {
+  padding: 0;
+}
 .kv2ps-card-style-minimal .kv2ps-card {
   border: 0;
 }
