@@ -22,14 +22,20 @@ foreach ( isset( $example['images'] ) && is_array( $example['images'] ) ? $examp
 if ( ! isset( $project_example['schema_version'] ) || '1.1' !== $project_example['schema_version'] || empty( $project_example['project']['fields']['title'] ) ) {
 	$errors[] = 'Complete realization example is invalid.';
 }
+if ( empty( $project_example['project']['location']['city'] ) || empty( $project_example['project']['location']['postal_code'] ) || empty( $project_example['project']['taxonomies']['villes'][0]['slug'] ) ) {
+	$errors[] = 'Complete realization example is missing its canonical location fields.';
+}
 
 $required = array(
 	'kv2-portfolio-studio.php',
 	'includes/class-kv2ps-plugin.php',
 	'includes/class-kv2ps-post-types.php',
 	'includes/class-kv2ps-admin.php',
+	'includes/class-kv2ps-json.php',
 	'includes/class-kv2ps-image-metadata.php',
 	'includes/class-kv2ps-importer.php',
+	'includes/class-kv2ps-compatibility.php',
+	'includes/class-kv2ps-seo.php',
 	'includes/class-kv2ps-schema.php',
 	'includes/class-kv2ps-completeness.php',
 	'includes/class-kv2ps-project-package.php',
@@ -38,6 +44,12 @@ $required = array(
 	'schema/chatgpt-realisation.schema.json',
 	'examples/chatgpt-realisation.example.json',
 	'tests/smoke-bootstrap.php',
+	'tests/security-contract.php',
+	'tests/seo-contract.php',
+	'tests/migration-contract.php',
+	'tests/shortcode-filters-contract.php',
+	'tests/single-layout-contract.php',
+	'tests/editor-experience-contract.php',
 	'templates/single-kv2_realisation.php',
 	'templates/archive-kv2_realisation.php',
 );
