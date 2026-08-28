@@ -24,6 +24,7 @@ Le plugin ne supprime aucune donnée à la désinstallation. Le module EXIF lit 
 = 1.1.18 =
 * Neutralise le padding injecté par Astra dans chaque carte du portfolio.
 * Rétablit les images à la largeur complète de leur colonne sur les pages en conteneur séparé.
+* Ignore les entrées de taxonomie invalides avant le rendu des cartes afin d’éviter les avertissements PHP répétés et les réponses 502 liées à des en-têtes FastCGI surdimensionnés.
 
 = 1.1.17 =
 * Adapte le nombre de colonnes à la largeur réelle du bloc portfolio, y compris dans Elementor.

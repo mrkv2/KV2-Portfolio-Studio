@@ -710,6 +710,15 @@ final class KV2PS_Plugin {
 		$post_id       = get_the_ID();
 		$service_terms = get_the_terms( get_the_ID(), 'kv2_service' );
 		$service_terms = is_wp_error( $service_terms ) ? array() : (array) $service_terms;
+		$service_terms = array_values(
+			array_filter(
+				$service_terms,
+				static function ( $service_term ) {
+					return is_object( $service_term )
+						&& isset( $service_term->term_id, $service_term->name, $service_term->slug );
+				}
+			)
+		);
 		$term_labels   = array();
 		$service_tax   = get_taxonomy( 'kv2_service' );
 		foreach ( $service_terms as $service_term ) {

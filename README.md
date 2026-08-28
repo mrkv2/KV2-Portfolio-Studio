@@ -81,6 +81,14 @@ La V1.1.17 calcule les colonnes du portfolio d’après la largeur réelle de la
 
 La V1.1.18 neutralise le padding de carte très important ajouté par Astra sur les conteneurs séparés. Les images occupent ainsi toute la largeur de leur colonne au lieu d’être comprimées au centre de chaque carte.
 
+### Incident 502 du 28 août 2026
+
+Sur `tapissier-laurot.fr`, l’archive `/realisation-tapisserie/` et la route REST d’édition de la page 513 renvoyaient ponctuellement un `502 Bad Gateway`. Le journal Nginx indiquait `upstream sent too big header while reading response header from upstream`.
+
+La cause était une valeur `false` présente dans le tableau renvoyé pour la taxonomie `kv2_service`. Le rendu d’une carte tentait ensuite de lire `term_id` et `name` sur cette valeur. Les avertissements PHP répétés pour chaque carte gonflaient les en-têtes FastCGI jusqu’au rejet par Nginx.
+
+Le rendu filtre désormais toute entrée qui n’est pas un objet de terme exploitable avant de construire les libellés et les slugs. Après déploiement du correctif, l’archive et la route REST ont toutes deux été vérifiées en HTTP 200. Le contrat d’expérience éditoriale protège ce garde-fou contre une régression.
+
 ## CTA intelligent et Click to Chat
 
 Dans **Réalisations → Réglages**, choisir :
