@@ -103,8 +103,8 @@ final class KV2PS_Importer {
 		}
 		?>
 		<div class="wrap kv2ps-admin">
-			<h1><?php esc_html_e( 'Importer depuis WP Portfolio', 'kv2-portfolio-studio' ); ?></h1>
-			<p><?php esc_html_e( 'L’import est non destructif : WP Portfolio et ses données restent intacts. Le mode brouillon sert aux futures études de cas ; le mode galerie reprend uniquement les sources déjà publiées, en noindex et hors sitemap.', 'kv2-portfolio-studio' ); ?></p>
+			<h1><?php esc_html_e( 'Importer depuis Astra Portfolio', 'kv2-portfolio-studio' ); ?></h1>
+			<p><?php esc_html_e( 'L’import est non destructif : Astra Portfolio et ses données restent intacts. Le mode brouillon sert aux futures études de cas ; le mode galerie reprend uniquement les sources déjà publiées, en noindex et hors sitemap.', 'kv2-portfolio-studio' ); ?></p>
 
 			<?php if ( $result ) : ?>
 				<div class="notice notice-success inline"><p><?php echo esc_html( sprintf( __( '%1$d importé(s), %2$d réparé(s) ou resynchronisé(s), %3$d ignoré(s), %4$d erreur(s).', 'kv2-portfolio-studio' ), $result['imported'], $result['updated'], $result['skipped'], count( $result['errors'] ) ) ); ?></p></div>
@@ -114,13 +114,13 @@ final class KV2PS_Importer {
 			<?php if ( ! $result && $remaining ) : ?><div class="notice notice-info inline"><p><?php echo esc_html( sprintf( __( 'Un import interrompu contient encore %d source(s).', 'kv2-portfolio-studio' ), $remaining ) ); ?></p><form method="post"><?php wp_nonce_field( 'kv2ps_import_wp_portfolio', 'kv2ps_import_nonce' ); ?><button class="button button-primary" name="kv2ps_import_action" type="submit" value="continue"><?php esc_html_e( 'Reprendre l’import', 'kv2-portfolio-studio' ); ?></button></form></div><?php endif; ?>
 
 			<?php if ( ! $available ) : ?>
-				<div class="notice notice-warning inline"><p><?php esc_html_e( 'Le type de contenu astra-portfolio n’est pas actif. Activez temporairement WP Portfolio pour effectuer l’import, puis revenez ici.', 'kv2-portfolio-studio' ); ?></p></div>
+				<div class="notice notice-warning inline"><p><?php esc_html_e( 'Le type de contenu astra-portfolio n’est pas actif. Activez temporairement Astra Portfolio pour effectuer l’import, puis revenez ici.', 'kv2-portfolio-studio' ); ?></p></div>
 			<?php elseif ( ! $sources ) : ?>
-				<p><?php esc_html_e( 'Aucun élément WP Portfolio détecté.', 'kv2-portfolio-studio' ); ?></p>
+				<p><?php esc_html_e( 'Aucun élément Astra Portfolio détecté.', 'kv2-portfolio-studio' ); ?></p>
 			<?php else : ?>
 				<?php $published_count = count( $published_sources ); ?>
 				<p><strong><?php echo esc_html( sprintf( __( '%1$d sources détectées, dont %2$d publiées.', 'kv2-portfolio-studio' ), count( $sources ), $published_count ) ); ?></strong> <button class="button button-small" id="kv2ps-select-published" type="button"><?php esc_html_e( 'Sélectionner les publiées', 'kv2-portfolio-studio' ); ?></button></p>
-				<div class="notice notice-warning inline"><p><strong><?php esc_html_e( 'Ce que WP Portfolio contient réellement', 'kv2-portfolio-studio' ); ?></strong><br><?php echo esc_html( sprintf( __( '%1$d élément(s) publié(s) sur %2$d ne contiennent aucun texte éditorial. %3$d n’ont qu’une image et %4$d en ont plusieurs.', 'kv2-portfolio-studio' ), $empty_source_count, $published_count, $single_image_count, $multi_image_count ) ); ?><br><?php esc_html_e( 'Ces sources sont des cartes d’images, pas des fiches complètes. KV2 les conserve donc en galerie noindex avec visionneuse. Une étude de cas indexable doit être enrichie avec un contenu réel.', 'kv2-portfolio-studio' ); ?></p></div>
+				<div class="notice notice-warning inline"><p><strong><?php esc_html_e( 'Ce que le portfolio source contient réellement', 'kv2-portfolio-studio' ); ?></strong><br><?php echo esc_html( sprintf( __( '%1$d élément(s) publié(s) sur %2$d ne contiennent aucun texte éditorial. %3$d n’ont qu’une image et %4$d en ont plusieurs.', 'kv2-portfolio-studio' ), $empty_source_count, $published_count, $single_image_count, $multi_image_count ) ); ?><br><?php esc_html_e( 'Ces sources sont des cartes d’images, pas des fiches complètes. KV2 les conserve donc en galerie noindex avec visionneuse. Une étude de cas indexable doit être enrichie avec un contenu réel.', 'kv2-portfolio-studio' ); ?></p></div>
 				<form method="post">
 					<?php wp_nonce_field( 'kv2ps_import_wp_portfolio', 'kv2ps_import_nonce' ); ?>
 					<table class="widefat striped">
@@ -138,7 +138,7 @@ final class KV2PS_Importer {
 						<?php endforeach; ?>
 						</tbody>
 					</table>
-					<p class="submit"><button class="button" name="kv2ps_import_action" type="submit" value="draft" onclick="return window.confirm('<?php echo esc_js( __( 'Créer les brouillons sélectionnés ?', 'kv2-portfolio-studio' ) ); ?>');"><?php esc_html_e( 'Importer en brouillons', 'kv2-portfolio-studio' ); ?></button> <button class="button button-primary" name="kv2ps_import_action" type="submit" value="gallery" onclick="return window.confirm('<?php echo esc_js( __( 'Importer les sources publiées en galerie noindex ? Les sources WP Portfolio ne seront ni modifiées ni supprimées.', 'kv2-portfolio-studio' ) ); ?>');"><?php esc_html_e( 'Importer comme galerie noindex', 'kv2-portfolio-studio' ); ?></button></p>
+					<p class="submit"><button class="button" name="kv2ps_import_action" type="submit" value="draft" onclick="return window.confirm('<?php echo esc_js( __( 'Créer les brouillons sélectionnés ?', 'kv2-portfolio-studio' ) ); ?>');"><?php esc_html_e( 'Importer en brouillons', 'kv2-portfolio-studio' ); ?></button> <button class="button button-primary" name="kv2ps_import_action" type="submit" value="gallery" onclick="return window.confirm('<?php echo esc_js( __( 'Importer les sources publiées en galerie noindex ? Les sources Astra Portfolio ne seront ni modifiées ni supprimées.', 'kv2-portfolio-studio' ) ); ?>');"><?php esc_html_e( 'Importer comme galerie noindex', 'kv2-portfolio-studio' ); ?></button></p>
 				</form>
 				<form method="post">
 					<?php wp_nonce_field( 'kv2ps_import_wp_portfolio', 'kv2ps_import_nonce' ); ?>
@@ -180,7 +180,7 @@ final class KV2PS_Importer {
 			if ( ! $content && ! $gallery_mode ) {
 				$content = sprintf(
 					'<p>%s</p>',
-					esc_html__( 'Contenu à compléter après import depuis WP Portfolio.', 'kv2-portfolio-studio' )
+					esc_html__( 'Contenu à compléter après import depuis Astra Portfolio.', 'kv2-portfolio-studio' )
 				);
 			}
 
@@ -251,8 +251,11 @@ final class KV2PS_Importer {
 		}
 
 		$content = trim( wp_strip_all_tags( (string) $post->post_content ) );
-		$placeholder = trim( wp_strip_all_tags( __( 'Contenu à compléter après import depuis WP Portfolio.', 'kv2-portfolio-studio' ) ) );
-		if ( $content && $content !== $placeholder ) {
+		$placeholders = array(
+			trim( wp_strip_all_tags( __( 'Contenu à compléter après import depuis Astra Portfolio.', 'kv2-portfolio-studio' ) ) ),
+			trim( wp_strip_all_tags( __( 'Contenu à compléter après import depuis WP Portfolio.', 'kv2-portfolio-studio' ) ) ),
+		);
+		if ( $content && ! in_array( $content, $placeholders, true ) ) {
 			return false;
 		}
 		if ( trim( (string) $post->post_excerpt ) ) {
@@ -318,12 +321,16 @@ final class KV2PS_Importer {
 
 	private static function map_terms( $post_id, $source_taxonomy, $source_terms ) {
 		$by_taxonomy = array();
+		$location    = self::source_location( $source_terms );
 		foreach ( $source_terms as $source_term ) {
 			if ( ! is_object( $source_term ) || empty( $source_term->term_id ) || empty( $source_term->name ) ) {
 				continue;
 			}
 			$target_taxonomy = self::target_taxonomy( $source_taxonomy, $source_term->name );
 			if ( ! $target_taxonomy ) {
+				continue;
+			}
+			if ( $location && 'kv2_ville' === $target_taxonomy ) {
 				continue;
 			}
 			$target_id = self::mapped_term_id( $target_taxonomy, $source_taxonomy, $source_term );
@@ -335,6 +342,26 @@ final class KV2PS_Importer {
 		foreach ( $by_taxonomy as $taxonomy => $term_ids ) {
 			wp_set_object_terms( $post_id, array_values( array_unique( array_map( 'absint', $term_ids ) ) ), $taxonomy, true );
 		}
+		if ( $location ) {
+			KV2PS_Post_Types::set_location( $post_id, $location );
+		}
+	}
+
+	private static function source_location( $source_terms ) {
+		foreach ( (array) $source_terms as $source_term ) {
+			$name = is_object( $source_term ) && isset( $source_term->name ) ? html_entity_decode( wp_strip_all_tags( (string) $source_term->name ), ENT_QUOTES, 'UTF-8' ) : '';
+			if ( ! preg_match( '/^(.+?)\s*\((\d{5})\)\s*$/u', trim( $name ), $matches ) ) {
+				continue;
+			}
+			$postal_code = $matches[2];
+			$department  = in_array( substr( $postal_code, 0, 2 ), array( '97', '98' ), true ) ? substr( $postal_code, 0, 3 ) : substr( $postal_code, 0, 2 );
+			return array(
+				'city'        => sanitize_text_field( $matches[1] ),
+				'department'  => $department,
+				'postal_code' => $postal_code,
+			);
+		}
+		return array();
 	}
 
 	private static function mapped_term_id( $target_taxonomy, $source_taxonomy, $source_term ) {
@@ -375,6 +402,10 @@ final class KV2PS_Importer {
 	}
 
 	private static function target_taxonomy( $source_taxonomy, $name ) {
+		return self::target_taxonomy_for_profile( $source_taxonomy, $name, KV2PS_Plugin::business_profile() );
+	}
+
+	public static function target_taxonomy_for_profile( $source_taxonomy, $name, $profile ) {
 		if ( 'astra-portfolio-categories' === $source_taxonomy ) {
 			return 'kv2_service';
 		}
@@ -385,7 +416,23 @@ final class KV2PS_Importer {
 			return '';
 		}
 
-		$value = remove_accents( strtolower( (string) $name ) );
+		$value = strtolower( html_entity_decode( wp_strip_all_tags( (string) $name ), ENT_QUOTES, 'UTF-8' ) );
+		$value = function_exists( 'remove_accents' ) ? remove_accents( $value ) : $value;
+		if ( KV2PS_Plugin::PROFILE_ROOFING === $profile ) {
+			if ( preg_match( '/\b\d{5}\b|\b(paris|yvelines|hauts de seine|seine et marne|essonne|val d oise|val de marne|seine saint denis|oise|ile de france)\b/u', $value ) ) {
+				return 'kv2_ville';
+			}
+			if ( preg_match( '/\b(zinc|tuile|tuiles|ardoise|bac acier|acier|cuivre|plomb|bitume|goudron|soprema|membrane|vm ?zinc)\b/u', $value ) ) {
+				return 'kv2_style';
+			}
+			if ( preg_match( '/\b(fuite|etancheite|reparation|renovation|refection|depannage|urgence|pose|remplacement|entretien|demoussage|ravalement|intervention)\b/u', $value ) ) {
+				return 'kv2_service';
+			}
+			if ( preg_match( '/\b(cheminee|faitage|faitiere|solin|rive|ventilation|velux|fenetre|gouttiere|noue|charpente|evacuation|toiture terrasse)\b/u', $value ) ) {
+				return 'kv2_meuble';
+			}
+			return 'kv2_technique';
+		}
 		if ( preg_match( '/\b(paris|yvelines|oise|seine|val d|ile de france|78|75|92|93|94|95|60)\b/', $value ) ) {
 			return 'kv2_ville';
 		}

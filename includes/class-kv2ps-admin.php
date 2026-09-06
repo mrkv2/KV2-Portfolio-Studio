@@ -42,8 +42,8 @@ final class KV2PS_Admin {
 
 		add_submenu_page(
 			'edit.php?post_type=' . KV2PS_Post_Types::POST_TYPE,
-			__( 'Importer WP Portfolio', 'kv2-portfolio-studio' ),
-			__( 'Importer WP Portfolio', 'kv2-portfolio-studio' ),
+			__( 'Importer Astra Portfolio', 'kv2-portfolio-studio' ),
+			__( 'Importer Astra Portfolio', 'kv2-portfolio-studio' ),
 			'manage_options',
 			'kv2ps-import',
 			array( 'KV2PS_Importer', 'render_page' )
@@ -82,7 +82,9 @@ final class KV2PS_Admin {
 		$trigger  = isset( $input['ctc_trigger'] ) && in_array( $input['ctc_trigger'], array( 'ctc_chat', 'ctc_greetings' ), true ) ? $input['ctc_trigger'] : $defaults['ctc_trigger'];
 		$creator  = isset( $input['image_creator_type'] ) && in_array( $input['image_creator_type'], array( 'Organization', 'Person' ), true ) ? $input['image_creator_type'] : $defaults['image_creator_type'];
 		$routing  = isset( $input['routing_mode'] ) && in_array( $input['routing_mode'], array( 'standard', 'existing_page' ), true ) ? $input['routing_mode'] : $defaults['routing_mode'];
+		$profile  = isset( $input['business_profile'] ) && in_array( $input['business_profile'], array( KV2PS_Plugin::PROFILE_UPHOLSTERY, KV2PS_Plugin::PROFILE_ROOFING ), true ) ? $input['business_profile'] : $defaults['business_profile'];
 		return array(
+			'business_profile'          => $profile,
 			'archive_title'             => isset( $input['archive_title'] ) ? sanitize_text_field( $input['archive_title'] ) : '',
 			'archive_intro'             => isset( $input['archive_intro'] ) ? wp_kses_post( $input['archive_intro'] ) : '',
 			'portfolio_page_url'        => isset( $input['portfolio_page_url'] ) ? esc_url_raw( $input['portfolio_page_url'] ) : '',
@@ -142,6 +144,7 @@ final class KV2PS_Admin {
 		$portfolio_page_id = ! empty( $settings['portfolio_page_url'] ) ? url_to_postid( $settings['portfolio_page_url'] ) : 0;
 		$rank_math_title   = $portfolio_page_id ? trim( (string) get_post_meta( $portfolio_page_id, 'rank_math_title', true ) ) : '';
 		$rank_math_desc    = $portfolio_page_id ? trim( (string) get_post_meta( $portfolio_page_id, 'rank_math_description', true ) ) : '';
+		$roofing           = KV2PS_Plugin::PROFILE_ROOFING === KV2PS_Plugin::business_profile( $settings );
 		?>
 		<div class="wrap kv2ps-admin">
 			<h1><?php esc_html_e( 'Réglages de KV2 Portfolio Studio', 'kv2-portfolio-studio' ); ?></h1>
@@ -152,6 +155,10 @@ final class KV2PS_Admin {
 			<form action="options.php" method="post">
 				<?php settings_fields( 'kv2ps_settings_group' ); ?>
 				<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><label for="kv2ps-business-profile"><?php esc_html_e( 'Profil métier', 'kv2-portfolio-studio' ); ?></label></th>
+					<td><select id="kv2ps-business-profile" name="kv2ps_settings[business_profile]"><option value="roofing" <?php selected( $settings['business_profile'], KV2PS_Plugin::PROFILE_ROOFING ); ?>><?php esc_html_e( 'Couverture et zinguerie', 'kv2-portfolio-studio' ); ?></option><option value="upholstery" <?php selected( $settings['business_profile'], KV2PS_Plugin::PROFILE_UPHOLSTERY ); ?>><?php esc_html_e( 'Tapisserie d’ameublement', 'kv2-portfolio-studio' ); ?></option></select><p class="description"><?php esc_html_e( 'Adapte les libellés métier, les taxonomies, l’assistant ChatGPT et le classement des imports Astra Portfolio.', 'kv2-portfolio-studio' ); ?></p></td>
+				</tr>
 					<tr>
 					<th scope="row"><label for="kv2ps-archive-title"><?php esc_html_e( 'H1 de la page principale', 'kv2-portfolio-studio' ); ?></label></th>
 					<td><input class="regular-text" id="kv2ps-archive-title" name="kv2ps_settings[archive_title]" type="text" value="<?php echo esc_attr( $settings['archive_title'] ); ?>"><p class="description"><?php esc_html_e( 'Le shortcode l’affiche automatiquement uniquement sur la page principale configurée.', 'kv2-portfolio-studio' ); ?></p></td>
@@ -163,9 +170,9 @@ final class KV2PS_Admin {
 				<tr><th scope="row"><label for="kv2ps-portfolio-page-url"><?php esc_html_e( 'Page principale des réalisations', 'kv2-portfolio-studio' ); ?></label></th><td><input class="regular-text code" id="kv2ps-portfolio-page-url" name="kv2ps_settings[portfolio_page_url]" type="url" value="<?php echo esc_attr( $settings['portfolio_page_url'] ); ?>"><p class="description"><?php esc_html_e( 'URL canonique du catalogue et destination de « Toutes les réalisations ».', 'kv2-portfolio-studio' ); ?></p></td></tr>
 				<tr><th scope="row"><label for="kv2ps-portfolio-seo-title"><?php esc_html_e( 'Titre SEO de secours', 'kv2-portfolio-studio' ); ?></label></th><td><input class="large-text" id="kv2ps-portfolio-seo-title" name="kv2ps_settings[portfolio_seo_title]" type="text" value="<?php echo esc_attr( $settings['portfolio_seo_title'] ); ?>"><p class="description"><?php esc_html_e( 'Utilisé uniquement si aucun titre Rank Math propre à la page n’est enregistré.', 'kv2-portfolio-studio' ); ?></p></td></tr>
 				<tr><th scope="row"><label for="kv2ps-portfolio-meta-description"><?php esc_html_e( 'Meta description de secours', 'kv2-portfolio-studio' ); ?></label></th><td><textarea class="large-text" id="kv2ps-portfolio-meta-description" name="kv2ps_settings[portfolio_meta_description]" rows="3"><?php echo esc_textarea( $settings['portfolio_meta_description'] ); ?></textarea><p class="description"><?php esc_html_e( 'Utilisée uniquement lorsque Rank Math ne produit aucune description.', 'kv2-portfolio-studio' ); ?></p></td></tr>
-				<tr><th colspan="2"><h2><?php esc_html_e( 'Compatibilité des URL et migration', 'kv2-portfolio-studio' ); ?></h2><p><?php esc_html_e( 'Le mode site existant protège une page /realisations/ déjà publiée et utilise un autre préfixe uniquement pour les futures études de cas.', 'kv2-portfolio-studio' ); ?></p></th></tr>
-				<tr><th scope="row"><label for="kv2ps-routing-mode"><?php esc_html_e( 'Mode de routage', 'kv2-portfolio-studio' ); ?></label></th><td><select id="kv2ps-routing-mode" name="kv2ps_settings[routing_mode]"><option value="existing_page" <?php selected( $settings['routing_mode'], 'existing_page' ); ?>><?php esc_html_e( 'Site existant — préserver /realisations/', 'kv2-portfolio-studio' ); ?></option><option value="standard" <?php selected( $settings['routing_mode'], 'standard' ); ?>><?php esc_html_e( 'Standard — archive KV2 sur /realisations/', 'kv2-portfolio-studio' ); ?></option></select></td></tr>
-				<tr><th scope="row"><label for="kv2ps-single-slug"><?php esc_html_e( 'Préfixe des nouvelles études de cas', 'kv2-portfolio-studio' ); ?></label></th><td><input class="regular-text code" id="kv2ps-single-slug" name="kv2ps_settings[single_slug]" type="text" value="<?php echo esc_attr( $settings['single_slug'] ); ?>"><p class="description"><?php esc_html_e( 'Utilisé seulement en mode site existant, par exemple /realisation/nom-du-projet/.', 'kv2-portfolio-studio' ); ?></p></td></tr>
+				<tr><th colspan="2"><h2><?php esc_html_e( 'Compatibilité des URL et migration', 'kv2-portfolio-studio' ); ?></h2><p><?php echo esc_html( $roofing ? __( 'Le mode site existant protège la page /realisations-couvreur/ et réserve /chantier/ aux nouvelles études de cas.', 'kv2-portfolio-studio' ) : __( 'Le mode site existant protège une page /realisations/ déjà publiée et utilise un autre préfixe uniquement pour les futures études de cas.', 'kv2-portfolio-studio' ) ); ?></p></th></tr>
+				<tr><th scope="row"><label for="kv2ps-routing-mode"><?php esc_html_e( 'Mode de routage', 'kv2-portfolio-studio' ); ?></label></th><td><select id="kv2ps-routing-mode" name="kv2ps_settings[routing_mode]"><option value="existing_page" <?php selected( $settings['routing_mode'], 'existing_page' ); ?>><?php echo esc_html( $roofing ? __( 'Site existant — préserver /realisations-couvreur/', 'kv2-portfolio-studio' ) : __( 'Site existant — préserver /realisations/', 'kv2-portfolio-studio' ) ); ?></option><option value="standard" <?php selected( $settings['routing_mode'], 'standard' ); ?>><?php esc_html_e( 'Standard — archive KV2 sur /realisations/', 'kv2-portfolio-studio' ); ?></option></select></td></tr>
+				<tr><th scope="row"><label for="kv2ps-single-slug"><?php esc_html_e( 'Préfixe des nouvelles études de cas', 'kv2-portfolio-studio' ); ?></label></th><td><input class="regular-text code" id="kv2ps-single-slug" name="kv2ps_settings[single_slug]" type="text" value="<?php echo esc_attr( $settings['single_slug'] ); ?>"><p class="description"><?php echo esc_html( $roofing ? __( 'Utilisé seulement en mode site existant, par exemple /chantier/nom-du-projet/.', 'kv2-portfolio-studio' ) : __( 'Utilisé seulement en mode site existant, par exemple /realisation/nom-du-projet/.', 'kv2-portfolio-studio' ) ); ?></p></td></tr>
 				<tr><th scope="row"><?php esc_html_e( 'Archive technique', 'kv2-portfolio-studio' ); ?></th><td><label><input name="kv2ps_settings[redirect_archive_to_portfolio]" type="checkbox" value="1" <?php checked( $settings['redirect_archive_to_portfolio'], '1' ); ?>> <?php esc_html_e( 'Rediriger en 301 /realisations/ vers la page principale, sans toucher aux fiches individuelles', 'kv2-portfolio-studio' ); ?></label></td></tr>
 				<tr><th scope="row"><?php esc_html_e( 'Alias WP Portfolio', 'kv2-portfolio-studio' ); ?></th><td><label><input name="kv2ps_settings[legacy_shortcode_alias]" type="checkbox" value="1" <?php checked( $settings['legacy_shortcode_alias'], '1' ); ?>> <?php esc_html_e( 'Interpréter [wp_portfolio] avec KV2 uniquement lorsque WP Portfolio ne fournit plus ce shortcode', 'kv2-portfolio-studio' ); ?></label><p class="description"><?php esc_html_e( 'Laissez désactivé pendant l’import et les contrôles visuels. KV2 ne remplace jamais un shortcode encore enregistré par WP Portfolio.', 'kv2-portfolio-studio' ); ?></p></td></tr>
 				<tr><th colspan="2"><h2><?php esc_html_e( 'Affichage des réalisations', 'kv2-portfolio-studio' ); ?></h2></th></tr>
@@ -300,11 +307,19 @@ final class KV2PS_Admin {
 
 	public static function render_project_metabox( $post ) {
 		wp_nonce_field( 'kv2ps_save_realisation', 'kv2ps_nonce' );
-		$fields = array(
-			'problem'      => array( 'Le besoin / problème', 'Ce que le client souhaitait résoudre.' ),
-			'intervention' => array( 'Notre intervention', 'Diagnostic, étapes, savoir-faire et choix techniques.' ),
-			'result'       => array( 'Le résultat', 'Bénéfice visible, usage retrouvé et finition.' ),
-			'materials'    => array( 'Matières et finitions', 'Tissus, bois, mousses, peintures, références utiles.' ),
+		$roofing = KV2PS_Plugin::PROFILE_ROOFING === KV2PS_Plugin::business_profile();
+		$fields  = $roofing ? array(
+			'problem'       => array( 'Le besoin / problème', 'Fuite, infiltration, défaut de couverture ou demande du client.' ),
+			'intervention'  => array( 'Notre intervention', 'Diagnostic, dépose, préparation, pose, raccords et choix techniques.' ),
+			'result'        => array( 'Le résultat', 'Étanchéité obtenue, protection du bâtiment et finition visible.' ),
+			'materials'     => array( 'Matériaux et fournitures', 'Tuiles, zinc, membranes, bois, accessoires et marques confirmées.' ),
+			'initial_state' => array( 'État initial', 'Fuites, malfaçons, usure et configuration de la toiture avant intervention.' ),
+			'constraints'   => array( 'Contraintes particulières', 'Pente, accès, surface, éléments existants, météo ou contraintes techniques.' ),
+		) : array(
+			'problem'       => array( 'Le besoin / problème', 'Ce que le client souhaitait résoudre.' ),
+			'intervention'  => array( 'Notre intervention', 'Diagnostic, étapes, savoir-faire et choix techniques.' ),
+			'result'        => array( 'Le résultat', 'Bénéfice visible, usage retrouvé et finition.' ),
+			'materials'     => array( 'Matières et finitions', 'Tissus, bois, mousses, peintures, références utiles.' ),
 			'initial_state' => array( 'État initial', 'Usure, défauts ou état de la pièce avant intervention.' ),
 			'constraints'   => array( 'Contraintes particulières', 'Délais, conservation, usage, dimensions ou contraintes techniques.' ),
 		);
@@ -333,7 +348,7 @@ final class KV2PS_Admin {
 				<input id="kv2ps-project-date" name="kv2ps_project_date" type="date" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_project_date', true ) ); ?>">
 			</p>
 			<p class="kv2ps-field"><label for="kv2ps-duration"><strong><?php esc_html_e( 'Durée de réalisation', 'kv2-portfolio-studio' ); ?></strong></label><input id="kv2ps-duration" name="kv2ps_duration" type="text" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_duration', true ) ); ?>" placeholder="Ex. 3 semaines"></p>
-			<p class="kv2ps-field"><label for="kv2ps-work-type"><strong><?php esc_html_e( 'Type de transformation', 'kv2-portfolio-studio' ); ?></strong></label><input id="kv2ps-work-type" name="kv2ps_work_type" type="text" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_work_type', true ) ); ?>" placeholder="Restauration, création sur mesure…"></p>
+			<p class="kv2ps-field"><label for="kv2ps-work-type"><strong><?php echo esc_html( $roofing ? __( 'Type d’intervention', 'kv2-portfolio-studio' ) : __( 'Type de transformation', 'kv2-portfolio-studio' ) ); ?></strong></label><input id="kv2ps-work-type" name="kv2ps_work_type" type="text" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_work_type', true ) ); ?>" placeholder="<?php echo esc_attr( $roofing ? __( 'Rénovation, réparation, remplacement…', 'kv2-portfolio-studio' ) : __( 'Restauration, création sur mesure…', 'kv2-portfolio-studio' ) ); ?>"></p>
 			<p class="kv2ps-field"><label for="kv2ps-price-range"><strong><?php esc_html_e( 'Fourchette tarifaire facultative', 'kv2-portfolio-studio' ); ?></strong></label><input id="kv2ps-price-range" name="kv2ps_price_range" type="text" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_price_range', true ) ); ?>" placeholder="Ex. 800 à 1 200 €"></p>
 		</div>
 		<div class="kv2ps-gallery-grid">
@@ -345,7 +360,7 @@ final class KV2PS_Admin {
 			<h3><?php esc_html_e( 'Témoignage client', 'kv2-portfolio-studio' ); ?></h3>
 			<p class="kv2ps-field"><label for="kv2ps-testimonial"><strong><?php esc_html_e( 'Citation', 'kv2-portfolio-studio' ); ?></strong></label><textarea id="kv2ps-testimonial" name="kv2ps_testimonial" rows="3"><?php echo esc_textarea( get_post_meta( $post->ID, '_kv2ps_testimonial', true ) ); ?></textarea></p>
 			<div class="kv2ps-inline-fields">
-				<p><label for="kv2ps-testimonial-author"><?php esc_html_e( 'Nom affiché', 'kv2-portfolio-studio' ); ?></label><input id="kv2ps-testimonial-author" name="kv2ps_testimonial_author" type="text" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_testimonial_author', true ) ); ?>" placeholder="Cliente dans votre zone d’intervention"></p>
+				<p><label for="kv2ps-testimonial-author"><?php esc_html_e( 'Nom affiché', 'kv2-portfolio-studio' ); ?></label><input id="kv2ps-testimonial-author" name="kv2ps_testimonial_author" type="text" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_testimonial_author', true ) ); ?>" placeholder="<?php echo esc_attr( $roofing ? __( 'Client à Chaville', 'kv2-portfolio-studio' ) : __( 'Cliente dans votre zone d’intervention', 'kv2-portfolio-studio' ) ); ?>"></p>
 				<p><label for="kv2ps-testimonial-source"><?php esc_html_e( 'Source', 'kv2-portfolio-studio' ); ?></label><input id="kv2ps-testimonial-source" name="kv2ps_testimonial_source" type="text" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_testimonial_source', true ) ); ?>" placeholder="Google, e-mail…"></p>
 				<p><label for="kv2ps-testimonial-source-url"><?php esc_html_e( 'Lien de l’avis', 'kv2-portfolio-studio' ); ?></label><input id="kv2ps-testimonial-source-url" name="kv2ps_testimonial_source_url" type="url" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_testimonial_source_url', true ) ); ?>"></p>
 				<p><label for="kv2ps-testimonial-rating"><?php esc_html_e( 'Note sur 5', 'kv2-portfolio-studio' ); ?></label><input id="kv2ps-testimonial-rating" max="5" min="1" name="kv2ps_testimonial_rating" type="number" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_testimonial_rating', true ) ); ?>"></p>

@@ -73,6 +73,7 @@ final class KV2PS_Completeness {
 	}
 
 	public static function report( $post_id ) {
+		$taxonomy_config = KV2PS_Post_Types::taxonomy_config();
 		$image_ids = self::image_ids( $post_id );
 		$story     = array_filter(
 			array(
@@ -106,10 +107,10 @@ final class KV2PS_Completeness {
 			array( 'key' => 'result', 'label' => __( 'Résultat', 'kv2-portfolio-studio' ), 'ok' => (bool) get_post_meta( $post_id, '_kv2ps_result', true ), 'optional' => true, 'target' => '#kv2ps-result' ),
 			array( 'key' => 'before', 'label' => __( 'Photos avant', 'kv2-portfolio-studio' ), 'ok' => (bool) KV2PS_Post_Types::sanitize_ids( get_post_meta( $post_id, '_kv2ps_before_images', true ) ), 'optional' => true, 'target' => '#kv2ps-gallery-before' ),
 			array( 'key' => 'after', 'label' => __( 'Photos après', 'kv2-portfolio-studio' ), 'ok' => (bool) KV2PS_Post_Types::sanitize_ids( get_post_meta( $post_id, '_kv2ps_after_images', true ) ), 'optional' => true, 'target' => '#kv2ps-gallery-after' ),
-			array( 'key' => 'service', 'label' => __( 'Service', 'kv2-portfolio-studio' ), 'ok' => has_term( '', 'kv2_service', $post_id ), 'optional' => true, 'target' => '#taxonomy-kv2_service' ),
-			array( 'key' => 'furniture', 'label' => __( 'Type de meuble', 'kv2-portfolio-studio' ), 'ok' => has_term( '', 'kv2_meuble', $post_id ), 'optional' => true, 'target' => '#taxonomy-kv2_meuble' ),
-			array( 'key' => 'style', 'label' => __( 'Style', 'kv2-portfolio-studio' ), 'ok' => has_term( '', 'kv2_style', $post_id ), 'optional' => true, 'target' => '#tagsdiv-kv2_style' ),
-			array( 'key' => 'technique', 'label' => __( 'Technique', 'kv2-portfolio-studio' ), 'ok' => has_term( '', 'kv2_technique', $post_id ), 'optional' => true, 'target' => '#tagsdiv-kv2_technique' ),
+			array( 'key' => 'service', 'label' => __( $taxonomy_config['kv2_service'][1], 'kv2-portfolio-studio' ), 'ok' => has_term( '', 'kv2_service', $post_id ), 'optional' => true, 'target' => '#taxonomy-kv2_service' ),
+			array( 'key' => 'furniture', 'label' => __( $taxonomy_config['kv2_meuble'][1], 'kv2-portfolio-studio' ), 'ok' => has_term( '', 'kv2_meuble', $post_id ), 'optional' => true, 'target' => '#taxonomy-kv2_meuble' ),
+			array( 'key' => 'style', 'label' => __( $taxonomy_config['kv2_style'][1], 'kv2-portfolio-studio' ), 'ok' => has_term( '', 'kv2_style', $post_id ), 'optional' => true, 'target' => '#tagsdiv-kv2_style' ),
+			array( 'key' => 'technique', 'label' => __( $taxonomy_config['kv2_technique'][1], 'kv2-portfolio-studio' ), 'ok' => has_term( '', 'kv2_technique', $post_id ), 'optional' => true, 'target' => '#tagsdiv-kv2_technique' ),
 		);
 
 		$earned  = 0;

@@ -3,6 +3,9 @@
 defined( 'ABSPATH' ) || exit;
 
 final class KV2PS_Plugin {
+	const PROFILE_UPHOLSTERY = 'upholstery';
+	const PROFILE_ROOFING    = 'roofing';
+
 	private static $instance;
 
 	public static function instance() {
@@ -140,28 +143,66 @@ final class KV2PS_Plugin {
 			}
 		}
 
+		if ( version_compare( $installed_version, '1.2.0', '<' ) ) {
+			$profile                      = self::business_profile( $settings );
+			$settings['business_profile'] = $profile;
+			if ( self::PROFILE_ROOFING === $profile ) {
+				$defaults     = self::default_settings();
+				$legacy_values = array(
+					'archive_title'              => array( '', 'Nos réalisations', 'Nos réalisations de tapisserie d’ameublement' ),
+					'portfolio_page_url'         => array( '', home_url( '/realisation-tapisserie/' ) ),
+					'portfolio_seo_title'        => array( '', 'Réalisations de tapisserie d’ameublement | ' . get_bloginfo( 'name' ) ),
+					'portfolio_meta_description' => array( '', 'Découvrez nos réalisations de tapisserie d’ameublement : fauteuils, chaises et canapés restaurés, cannage, rempaillage et réfection complète.' ),
+					'accent_color'               => array( '', '#9b6b43' ),
+					'cta_title'                  => array( '', 'Vous avez un projet similaire ?', 'Un meuble à restaurer ?' ),
+					'cta_text'                   => array( '', 'Parlons de votre meuble, de vos contraintes et du résultat souhaité.', 'Chaise, fauteuil, canapé ou tapis — cannage, rempaillage et réfection complète.' ),
+					'single_slug'                => array( '', 'realisation' ),
+				);
+				foreach ( $legacy_values as $key => $legacy ) {
+					$current = isset( $settings[ $key ] ) ? (string) $settings[ $key ] : '';
+					if ( in_array( $current, $legacy, true ) ) {
+						$settings[ $key ] = $defaults[ $key ];
+					}
+				}
+				foreach ( array( 'archive_intro', 'phone', 'whatsapp', 'cta_process_title', 'cta_process_steps', 'cta_benefits', 'cta_primary_label', 'cta_secondary_label', 'form_url', 'contact_url' ) as $key ) {
+					if ( empty( $settings[ $key ] ) ) {
+						$settings[ $key ] = $defaults[ $key ];
+					}
+				}
+				if ( self::detect_published_page( 'realisations-couvreur' ) ) {
+					$settings['routing_mode']                  = 'existing_page';
+					$settings['redirect_archive_to_portfolio'] = '0';
+				}
+			}
+		}
+
 		update_option( 'kv2ps_settings', $settings );
 		update_option( 'kv2ps_version', KV2PS_VERSION );
 	}
 
 	public static function default_settings() {
+		$profile        = self::detect_business_profile();
+		$profile_data   = self::profile_defaults( $profile );
 		$protected_page = self::detect_published_page( 'realisations' );
-		$existing_page  = $protected_page ?: self::detect_published_page( 'realisation-tapisserie' );
-		$site_name      = get_bloginfo( 'name' );
+		if ( self::PROFILE_ROOFING === $profile ) {
+			$protected_page = self::detect_published_page( 'realisations-couvreur' ) ?: $protected_page;
+		}
+		$existing_page = $protected_page ?: self::detect_published_page( self::PROFILE_ROOFING === $profile ? 'realisations-couvreur' : 'realisation-tapisserie' );
 		return array(
-			'archive_title'              => 'Nos réalisations de tapisserie d’ameublement',
-			'archive_intro'              => '',
-			'portfolio_page_url'         => $existing_page ?: home_url( '/realisation-tapisserie/' ),
-			'portfolio_seo_title'        => 'Réalisations de tapisserie d’ameublement | ' . $site_name,
-			'portfolio_meta_description' => 'Découvrez nos réalisations de tapisserie d’ameublement : fauteuils, chaises et canapés restaurés, cannage, rempaillage et réfection complète.',
+			'business_profile'           => $profile,
+			'archive_title'              => $profile_data['archive_title'],
+			'archive_intro'              => $profile_data['archive_intro'],
+			'portfolio_page_url'         => $existing_page ?: home_url( $profile_data['portfolio_path'] ),
+			'portfolio_seo_title'        => $profile_data['portfolio_seo_title'],
+			'portfolio_meta_description' => $profile_data['portfolio_meta_description'],
 			'routing_mode'               => $protected_page ? 'existing_page' : 'standard',
-			'single_slug'                => 'realisation',
+			'single_slug'                => $profile_data['single_slug'],
 			'redirect_archive_to_portfolio' => $protected_page ? '0' : '1',
 			'legacy_shortcode_alias'     => '0',
 			'contact_url'                => home_url( '/contact/' ),
-			'phone'                      => '',
-			'whatsapp'                   => '',
-			'accent_color'               => '#9b6b43',
+			'phone'                      => $profile_data['phone'],
+			'whatsapp'                   => $profile_data['whatsapp'],
+			'accent_color'               => $profile_data['accent_color'],
 			'rank_math_schema'           => '1',
 			'image_schema'               => '1',
 			'archive_layout'             => 'masonry',
@@ -174,17 +215,17 @@ final class KV2PS_Plugin {
 			'archive_show_search'        => '1',
 			'archive_show_cta'           => '1',
 			'before_after_mode'          => 'columns',
-			'cta_title'                  => 'Un meuble à restaurer ?',
-			'cta_text'                   => 'Chaise, fauteuil, canapé ou tapis — cannage, rempaillage et réfection complète.',
-			'cta_process_title'          => 'Comment ça se passe',
-			'cta_process_steps'          => "Vous envoyez des photos via le formulaire ou WhatsApp.\nNous vous donnons une estimation rapide.\nNous récupérons vos meubles sur rendez-vous.\nNous les livrons une fois restaurés.",
-			'cta_benefits'               => "Devis gratuit\nEnlèvement + livraison\nPaiement en 4 fois",
+			'cta_title'                  => $profile_data['cta_title'],
+			'cta_text'                   => $profile_data['cta_text'],
+			'cta_process_title'          => $profile_data['cta_process_title'],
+			'cta_process_steps'          => $profile_data['cta_process_steps'],
+			'cta_benefits'               => $profile_data['cta_benefits'],
 			'cta_show_opening_status'    => '1',
 			'cta_primary_action'         => 'click_to_chat',
-			'cta_primary_label'          => 'Échanger sur WhatsApp',
+			'cta_primary_label'          => $profile_data['cta_primary_label'],
 			'cta_secondary_enabled'      => '1',
-			'cta_secondary_label'        => 'Envoyer une demande',
-			'form_url'                   => home_url( '/contact/' ),
+			'cta_secondary_label'        => $profile_data['cta_secondary_label'],
+			'form_url'                   => home_url( $profile_data['form_path'] ),
 			'ctc_trigger'                => 'ctc_greetings',
 			'image_creator_type'         => 'Organization',
 			'image_creator_name'         => get_bloginfo( 'name' ),
@@ -194,6 +235,71 @@ final class KV2PS_Plugin {
 			'image_license_url'          => '',
 			'image_acquire_license_url'  => '',
 			'legacy_redirects'           => '1',
+		);
+	}
+
+	public static function business_profile( $settings = null ) {
+		if ( null === $settings ) {
+			$settings = get_option( 'kv2ps_settings', array() );
+		}
+		$profile = is_array( $settings ) && isset( $settings['business_profile'] ) ? sanitize_key( $settings['business_profile'] ) : '';
+		return in_array( $profile, array( self::PROFILE_UPHOLSTERY, self::PROFILE_ROOFING ), true ) ? $profile : self::detect_business_profile();
+	}
+
+	public static function detect_business_profile() {
+		$site_url = home_url( '/' );
+		$host     = function_exists( 'wp_parse_url' ) ? wp_parse_url( $site_url, PHP_URL_HOST ) : parse_url( $site_url, PHP_URL_HOST );
+		$host     = strtolower( (string) $host );
+		$site_name = strtolower( (string) get_bloginfo( 'name' ) );
+		if ( false !== strpos( $host, 'ets-mon-toit' ) || preg_match( '/\b(couvreur|toiture|zinguerie)\b/u', $site_name ) ) {
+			return self::PROFILE_ROOFING;
+		}
+		return self::PROFILE_UPHOLSTERY;
+	}
+
+	public static function profile_defaults( $profile = '' ) {
+		$profile  = in_array( $profile, array( self::PROFILE_UPHOLSTERY, self::PROFILE_ROOFING ), true ) ? $profile : self::detect_business_profile();
+		$site_name = get_bloginfo( 'name' );
+		if ( self::PROFILE_ROOFING === $profile ) {
+			return array(
+				'archive_title'              => 'Nos réalisations de couverture et de zinguerie',
+				'archive_intro'              => 'Découvrez les chantiers réalisés par ETS Mon Toit dans les Yvelines (78), les Hauts-de-Seine (92) et le Val-d’Oise (95) : rénovation de toiture, recherche de fuite, couverture, zinguerie et pose de fenêtres de toit.',
+				'portfolio_path'             => '/realisations-couvreur/',
+				'portfolio_seo_title'        => 'Réalisations de toiture, couverture et zinguerie | ETS Mon Toit',
+				'portfolio_meta_description' => 'Découvrez les réalisations d’ETS Mon Toit : rénovation de toiture, zinguerie, étanchéité, recherche de fuite et pose de Velux dans les 78, 92 et 95.',
+				'single_slug'                => 'chantier',
+				'phone'                      => '01 84 19 07 62',
+				'whatsapp'                   => '+33698549645',
+				'accent_color'               => '#DCA54A',
+				'cta_title'                  => 'Un projet de toiture ?',
+				'cta_text'                   => 'Fuite, rénovation, couverture, zinguerie ou fenêtre de toit : échangeons sur votre chantier.',
+				'cta_process_title'          => 'Comment se déroule votre projet',
+				'cta_process_steps'          => "Vous nous envoyez des photos et votre ville via WhatsApp ou le formulaire.\nNous analysons votre demande et convenons d’un rendez-vous si nécessaire.\nVous recevez un devis gratuit et détaillé.\nAprès validation, nous planifions et réalisons les travaux.",
+				'cta_benefits'               => "Devis gratuit\nIntervention rapide\nCouverture et zinguerie",
+				'cta_primary_label'          => 'Envoyer des photos sur WhatsApp',
+				'cta_secondary_label'        => 'Demander un devis gratuit',
+				'form_path'                  => '/#devis',
+			);
+		}
+
+		return array(
+			'archive_title'              => 'Nos réalisations de tapisserie d’ameublement',
+			'archive_intro'              => '',
+			'portfolio_path'             => '/realisation-tapisserie/',
+			'portfolio_seo_title'        => 'Réalisations de tapisserie d’ameublement | ' . $site_name,
+			'portfolio_meta_description' => 'Découvrez nos réalisations de tapisserie d’ameublement : fauteuils, chaises et canapés restaurés, cannage, rempaillage et réfection complète.',
+			'single_slug'                => 'realisation',
+			'phone'                      => '',
+			'whatsapp'                   => '',
+			'accent_color'               => '#9b6b43',
+			'cta_title'                  => 'Un meuble à restaurer ?',
+			'cta_text'                   => 'Chaise, fauteuil, canapé ou tapis — cannage, rempaillage et réfection complète.',
+			'cta_process_title'          => 'Comment ça se passe',
+			'cta_process_steps'          => "Vous envoyez des photos via le formulaire ou WhatsApp.\nNous vous donnons une estimation rapide.\nNous récupérons vos meubles sur rendez-vous.\nNous les livrons une fois restaurés.",
+			'cta_benefits'               => "Devis gratuit\nEnlèvement + livraison\nPaiement en 4 fois",
+			'cta_primary_label'          => 'Échanger sur WhatsApp',
+			'cta_secondary_label'        => 'Envoyer une demande',
+			'form_path'                  => '/contact/',
 		);
 	}
 
@@ -212,7 +318,7 @@ final class KV2PS_Plugin {
 		unset( $option );
 		$old_value = is_array( $old_value ) ? $old_value : array();
 		$new_value = is_array( $new_value ) ? $new_value : array();
-		foreach ( array( 'routing_mode', 'single_slug' ) as $key ) {
+		foreach ( array( 'business_profile', 'routing_mode', 'single_slug' ) as $key ) {
 			if ( (string) ( isset( $old_value[ $key ] ) ? $old_value[ $key ] : '' ) !== (string) ( isset( $new_value[ $key ] ) ? $new_value[ $key ] : '' ) ) {
 				KV2PS_Post_Types::register();
 				flush_rewrite_rules();
@@ -391,7 +497,9 @@ final class KV2PS_Plugin {
 					'service'      => '',
 					'ville'        => '',
 					'meuble'       => '',
+					'element_toiture' => '',
 					'style'        => '',
+					'materiau'     => '',
 					'technique'    => '',
 					'show_heading' => 'auto',
 					'heading'      => '',
@@ -572,7 +680,7 @@ final class KV2PS_Plugin {
 				<form class="kv2ps-search" action="<?php echo esc_url( $base_url ); ?>" method="get" role="search">
 					<label class="kv2ps-sr-only" for="kv2ps-search-<?php echo esc_attr( $key ); ?>"><?php esc_html_e( 'Rechercher dans les réalisations', 'kv2-portfolio-studio' ); ?></label>
 					<?php if ( $active_service ) : ?><input name="kv2ps_service" type="hidden" value="<?php echo esc_attr( $active_service ); ?>"><?php endif; ?>
-					<input id="kv2ps-search-<?php echo esc_attr( $key ); ?>" name="kv2ps_search" placeholder="<?php esc_attr_e( 'Titre, service ou ville…', 'kv2-portfolio-studio' ); ?>" type="search" value="<?php echo esc_attr( $search ); ?>">
+					<input id="kv2ps-search-<?php echo esc_attr( $key ); ?>" name="kv2ps_search" placeholder="<?php echo esc_attr( self::PROFILE_ROOFING === self::business_profile() ? __( 'Titre, travaux ou ville…', 'kv2-portfolio-studio' ) : __( 'Titre, service ou ville…', 'kv2-portfolio-studio' ) ); ?>" type="search" value="<?php echo esc_attr( $search ); ?>">
 					<button class="kv2ps-search-submit" type="submit"><?php esc_html_e( 'Rechercher', 'kv2-portfolio-studio' ); ?></button>
 				</form>
 			<?php endif; ?>
@@ -710,15 +818,6 @@ final class KV2PS_Plugin {
 		$post_id       = get_the_ID();
 		$service_terms = get_the_terms( get_the_ID(), 'kv2_service' );
 		$service_terms = is_wp_error( $service_terms ) ? array() : (array) $service_terms;
-		$service_terms = array_values(
-			array_filter(
-				$service_terms,
-				static function ( $service_term ) {
-					return is_object( $service_term )
-						&& isset( $service_term->term_id, $service_term->name, $service_term->slug );
-				}
-			)
-		);
 		$term_labels   = array();
 		$service_tax   = get_taxonomy( 'kv2_service' );
 		foreach ( $service_terms as $service_term ) {

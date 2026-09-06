@@ -3,10 +3,10 @@ Contributors: kv2
 Tags: portfolio, seo, image metadata, exif, rank math
 Requires at least: 6.5
 Requires PHP: 7.4
-Stable tag: 1.1.18
+Stable tag: 1.2.0
 License: Proprietary
 
-Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonnées d’images avec ChatGPT.
+Portfolio de réalisations SEO-first, profils métiers, import Astra Portfolio et flux de métadonnées d’images avec ChatGPT.
 
 == Installation ==
 
@@ -21,10 +21,18 @@ Le plugin ne supprime aucune donnée à la désinstallation. Le module EXIF lit 
 
 == Changelog ==
 
+= 1.2.0 =
+* Ajoute le profil Couverture et zinguerie configuré pour ETS Mon Toit.
+* Protège la page /realisations-couvreur/ et utilise /chantier/ pour les nouvelles études de cas.
+* Ajoute les libellés Types de travaux, Éléments de toiture et Matériaux sans casser les taxonomies historiques.
+* Adapte l’import Astra Portfolio aux services, communes, éléments et matériaux de couverture.
+* Convertit les termes Ville (code postal) en localisation canonique avec département et code postal séparés.
+* Ajoute les alias de shortcode element_toiture et materiau.
+* Spécialise l’assistant ChatGPT et ajoute l’exemple du chantier zinc à Chaville.
+
 = 1.1.18 =
 * Neutralise le padding injecté par Astra dans chaque carte du portfolio.
 * Rétablit les images à la largeur complète de leur colonne sur les pages en conteneur séparé.
-* Ignore les entrées de taxonomie invalides avant le rendu des cartes afin d’éviter les avertissements PHP répétés et les réponses 502 liées à des en-têtes FastCGI surdimensionnés.
 
 = 1.1.17 =
 * Adapte le nombre de colonnes à la largeur réelle du bloc portfolio, y compris dans Elementor.

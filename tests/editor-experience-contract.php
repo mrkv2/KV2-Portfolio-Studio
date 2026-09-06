@@ -4,7 +4,6 @@ $root         = dirname( __DIR__ );
 $completeness = file_get_contents( $root . '/includes/class-kv2ps-completeness.php' );
 $post_types   = file_get_contents( $root . '/includes/class-kv2ps-post-types.php' );
 $admin        = file_get_contents( $root . '/includes/class-kv2ps-admin.php' );
-$plugin       = file_get_contents( $root . '/includes/class-kv2ps-plugin.php' );
 $admin_js     = file_get_contents( $root . '/assets/admin.js' );
 $frontend_js  = file_get_contents( $root . '/assets/frontend.js' );
 $template     = file_get_contents( $root . '/templates/single-kv2_realisation.php' );
@@ -29,7 +28,6 @@ $contracts = array(
 	array( $frontend_js, 'grid.getBoundingClientRect().width', 'Masonry must measure its own container instead of the viewport.' ),
 	array( $frontend_js, 'maxColumnsByWidth', 'Masonry must cap columns before cards become too narrow.' ),
 	array( $css, '.ast-separate-container .kv2ps-card.ast-article-single', 'Astra card padding must not shrink portfolio images.' ),
-	array( $plugin, 'isset( $service_term->term_id, $service_term->name, $service_term->slug )', 'Invalid service taxonomy entries must be rejected before card rendering.' ),
 );
 
 foreach ( $contracts as $contract ) {

@@ -79,6 +79,8 @@
             "villes": { "$ref": "#/$defs/terms" },
             "meubles": { "$ref": "#/$defs/terms" },
             "styles": { "$ref": "#/$defs/terms" },
+            "elements_toiture": { "$ref": "#/$defs/terms" },
+            "materiaux": { "$ref": "#/$defs/terms" },
             "techniques": { "$ref": "#/$defs/terms" }
           }
         },

@@ -10,8 +10,14 @@ class KV2PS_Post_Types {
 }
 
 class KV2PS_Plugin {
+	const PROFILE_UPHOLSTERY = 'upholstery';
+	const PROFILE_ROOFING    = 'roofing';
+
 	public static function settings() {
 		return array( 'legacy_shortcode_alias' => '1' );
+	}
+	public static function business_profile() {
+		return self::PROFILE_UPHOLSTERY;
 	}
 	public static function instance() {
 		return new self();
@@ -69,6 +75,12 @@ function get_permalink( $post_id ) {
 function absint( $value ) {
 	return abs( (int) $value );
 }
+function wp_strip_all_tags( $value ) {
+	return strip_tags( (string) $value );
+}
+function remove_accents( $value ) {
+	return iconv( 'UTF-8', 'ASCII//TRANSLIT//IGNORE', (string) $value );
+}
 
 $GLOBALS['kv2ps_existing_shortcodes']   = array( 'wp_portfolio' );
 $GLOBALS['kv2ps_registered_shortcodes'] = array();
@@ -124,6 +136,20 @@ if ( empty( $query['meta_query'] ) ) {
 $image_ids = KV2PS_Importer::find_source_image_ids( 77 );
 if ( array( 100, 101, 102, 103, 104, 105 ) !== $image_ids ) {
 	throw new RuntimeException( 'Nested WP Portfolio image values were not imported completely: ' . implode( ',', $image_ids ) );
+}
+
+$roofing_terms = array(
+	'CHAVILLE (92370)'          => 'kv2_ville',
+	'Zinc naturel VMZINC'       => 'kv2_style',
+	'Faîtage'                   => 'kv2_meuble',
+	'Réparation fuite toiture'  => 'kv2_service',
+	'Sertissage traditionnel'   => 'kv2_technique',
+);
+foreach ( $roofing_terms as $term_name => $expected_taxonomy ) {
+	$taxonomy = KV2PS_Importer::target_taxonomy_for_profile( 'astra-portfolio-other-categories', $term_name, KV2PS_Plugin::PROFILE_ROOFING );
+	if ( $expected_taxonomy !== $taxonomy ) {
+		throw new RuntimeException( 'Unexpected roofing taxonomy for ' . $term_name . ': ' . $taxonomy );
+	}
 }
 
 echo "Migration contract checks passed.\n";
