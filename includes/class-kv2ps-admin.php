@@ -11,6 +11,11 @@ final class KV2PS_Admin {
 		add_action( 'add_meta_boxes_' . KV2PS_Post_Types::POST_TYPE, array( __CLASS__, 'add_meta_boxes' ) );
 		add_action( 'save_post_' . KV2PS_Post_Types::POST_TYPE, array( __CLASS__, 'save_realisation' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_assets' ) );
+		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'block_editor_assets' ) );
+		add_action( 'wp_ajax_kv2ps_create_city', array( __CLASS__, 'ajax_create_city' ) );
+		add_action( 'admin_notices', array( __CLASS__, 'location_notice' ) );
+		add_filter( 'manage_' . KV2PS_Post_Types::POST_TYPE . '_posts_columns', array( __CLASS__, 'realisation_columns' ), 20 );
+		add_action( 'manage_' . KV2PS_Post_Types::POST_TYPE . '_posts_custom_column', array( __CLASS__, 'render_realisation_column' ), 10, 2 );
 
 		foreach ( KV2PS_Post_Types::taxonomies() as $taxonomy ) {
 			add_action( $taxonomy . '_add_form_fields', array( __CLASS__, 'term_add_fields' ) );
@@ -41,8 +46,8 @@ final class KV2PS_Admin {
 
 		add_submenu_page(
 			'edit.php?post_type=' . KV2PS_Post_Types::POST_TYPE,
-			__( 'Importer WP Portfolio', 'kv2-portfolio-studio' ),
-			__( 'Importer WP Portfolio', 'kv2-portfolio-studio' ),
+			__( 'Importer Astra Portfolio', 'kv2-portfolio-studio' ),
+			__( 'Importer Astra Portfolio', 'kv2-portfolio-studio' ),
 			'manage_options',
 			'kv2ps-import',
 			array( 'KV2PS_Importer', 'render_page' )
@@ -80,10 +85,19 @@ final class KV2PS_Admin {
 		$action   = isset( $input['cta_primary_action'] ) && in_array( $input['cta_primary_action'], array( 'click_to_chat', 'form' ), true ) ? $input['cta_primary_action'] : $defaults['cta_primary_action'];
 		$trigger  = isset( $input['ctc_trigger'] ) && in_array( $input['ctc_trigger'], array( 'ctc_chat', 'ctc_greetings' ), true ) ? $input['ctc_trigger'] : $defaults['ctc_trigger'];
 		$creator  = isset( $input['image_creator_type'] ) && in_array( $input['image_creator_type'], array( 'Organization', 'Person' ), true ) ? $input['image_creator_type'] : $defaults['image_creator_type'];
+		$routing  = isset( $input['routing_mode'] ) && in_array( $input['routing_mode'], array( 'standard', 'existing_page' ), true ) ? $input['routing_mode'] : $defaults['routing_mode'];
+		$profile  = isset( $input['business_profile'] ) && in_array( $input['business_profile'], array( KV2PS_Plugin::PROFILE_UPHOLSTERY, KV2PS_Plugin::PROFILE_ROOFING ), true ) ? $input['business_profile'] : $defaults['business_profile'];
 		return array(
+			'business_profile'          => $profile,
 			'archive_title'             => isset( $input['archive_title'] ) ? sanitize_text_field( $input['archive_title'] ) : '',
 			'archive_intro'             => isset( $input['archive_intro'] ) ? wp_kses_post( $input['archive_intro'] ) : '',
 			'portfolio_page_url'        => isset( $input['portfolio_page_url'] ) ? esc_url_raw( $input['portfolio_page_url'] ) : '',
+			'portfolio_seo_title'       => isset( $input['portfolio_seo_title'] ) ? sanitize_text_field( $input['portfolio_seo_title'] ) : '',
+			'portfolio_meta_description'    => isset( $input['portfolio_meta_description'] ) ? sanitize_textarea_field( $input['portfolio_meta_description'] ) : '',
+			'routing_mode'               => $routing,
+			'single_slug'                => isset( $input['single_slug'] ) ? sanitize_title( $input['single_slug'] ) : $defaults['single_slug'],
+			'redirect_archive_to_portfolio' => empty( $input['redirect_archive_to_portfolio'] ) ? '0' : '1',
+			'legacy_shortcode_alias'     => empty( $input['legacy_shortcode_alias'] ) ? '0' : '1',
 			'contact_url'               => isset( $input['contact_url'] ) ? esc_url_raw( $input['contact_url'] ) : '',
 			'phone'                     => isset( $input['phone'] ) ? sanitize_text_field( $input['phone'] ) : '',
 			'whatsapp'                  => isset( $input['whatsapp'] ) ? preg_replace( '/[^0-9+]/', '', $input['whatsapp'] ) : '',
@@ -131,22 +145,41 @@ final class KV2PS_Admin {
 			get_option( 'kv2ps_settings', array() ),
 			KV2PS_Plugin::default_settings()
 		);
+		$portfolio_page_id = ! empty( $settings['portfolio_page_url'] ) ? url_to_postid( $settings['portfolio_page_url'] ) : 0;
+		$rank_math_title   = $portfolio_page_id ? trim( (string) get_post_meta( $portfolio_page_id, 'rank_math_title', true ) ) : '';
+		$rank_math_desc    = $portfolio_page_id ? trim( (string) get_post_meta( $portfolio_page_id, 'rank_math_description', true ) ) : '';
+		$roofing           = KV2PS_Plugin::PROFILE_ROOFING === KV2PS_Plugin::business_profile( $settings );
 		?>
 		<div class="wrap kv2ps-admin">
 			<h1><?php esc_html_e( 'Réglages de KV2 Portfolio Studio', 'kv2-portfolio-studio' ); ?></h1>
-			<p><?php esc_html_e( 'Rank Math conserve la main sur les titres, descriptions, canonicals et sitemaps. Le complément CreativeWork est facultatif et désactivé par défaut.', 'kv2-portfolio-studio' ); ?></p>
+			<p><?php esc_html_e( 'Rank Math conserve la main sur les valeurs déjà renseignées. KV2 fournit uniquement les secours manquants, la pagination canonique et un CreativeWork non dupliqué.', 'kv2-portfolio-studio' ); ?></p>
+			<?php if ( $portfolio_page_id ) : ?>
+				<div class="notice notice-info inline"><p><strong><?php esc_html_e( 'Contrôle de la page principale', 'kv2-portfolio-studio' ); ?></strong><br><?php echo KV2PS_SEO::page_has_h1( $portfolio_page_id ) ? esc_html__( 'H1 détecté dans la page ou Elementor.', 'kv2-portfolio-studio' ) : esc_html__( 'Aucun H1 éditorial détecté : le shortcode KV2 en ajoutera un automatiquement lorsqu’il prendra la main.', 'kv2-portfolio-studio' ); ?><br><?php echo esc_html( sprintf( __( 'Titre Rank Math actuel : %s', 'kv2-portfolio-studio' ), $rank_math_title ?: __( 'non renseigné — secours KV2 actif', 'kv2-portfolio-studio' ) ) ); ?><br><?php echo esc_html( sprintf( __( 'Description Rank Math actuelle : %s', 'kv2-portfolio-studio' ), $rank_math_desc ?: __( 'non renseignée — secours KV2 actif', 'kv2-portfolio-studio' ) ) ); ?></p><p><?php esc_html_e( 'KV2 ne corrige jamais silencieusement une valeur Rank Math existante : modifiez-la directement dans la page si elle ne décrit pas le portfolio.', 'kv2-portfolio-studio' ); ?></p></div>
+			<?php endif; ?>
 			<form action="options.php" method="post">
 				<?php settings_fields( 'kv2ps_settings_group' ); ?>
 				<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><label for="kv2ps-business-profile"><?php esc_html_e( 'Profil métier', 'kv2-portfolio-studio' ); ?></label></th>
+					<td><select id="kv2ps-business-profile" name="kv2ps_settings[business_profile]"><option value="roofing" <?php selected( $settings['business_profile'], KV2PS_Plugin::PROFILE_ROOFING ); ?>><?php esc_html_e( 'Couverture et zinguerie', 'kv2-portfolio-studio' ); ?></option><option value="upholstery" <?php selected( $settings['business_profile'], KV2PS_Plugin::PROFILE_UPHOLSTERY ); ?>><?php esc_html_e( 'Tapisserie d’ameublement', 'kv2-portfolio-studio' ); ?></option></select><p class="description"><?php esc_html_e( 'Adapte les libellés métier, les taxonomies, l’assistant ChatGPT et le classement des imports Astra Portfolio.', 'kv2-portfolio-studio' ); ?></p></td>
+				</tr>
 					<tr>
-						<th scope="row"><label for="kv2ps-archive-title"><?php esc_html_e( 'Titre de l’archive', 'kv2-portfolio-studio' ); ?></label></th>
-						<td><input class="regular-text" id="kv2ps-archive-title" name="kv2ps_settings[archive_title]" type="text" value="<?php echo esc_attr( $settings['archive_title'] ); ?>"></td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="kv2ps-archive-intro"><?php esc_html_e( 'Introduction', 'kv2-portfolio-studio' ); ?></label></th>
-						<td><textarea class="large-text" id="kv2ps-archive-intro" name="kv2ps_settings[archive_intro]" rows="5"><?php echo esc_textarea( $settings['archive_intro'] ); ?></textarea></td>
-					</tr>
-					<tr><th colspan="2"><h2><?php esc_html_e( 'Affichage des réalisations', 'kv2-portfolio-studio' ); ?></h2></th></tr>
+					<th scope="row"><label for="kv2ps-archive-title"><?php esc_html_e( 'H1 de la page principale', 'kv2-portfolio-studio' ); ?></label></th>
+					<td><input class="regular-text" id="kv2ps-archive-title" name="kv2ps_settings[archive_title]" type="text" value="<?php echo esc_attr( $settings['archive_title'] ); ?>"><p class="description"><?php esc_html_e( 'Le shortcode l’affiche automatiquement uniquement sur la page principale configurée.', 'kv2-portfolio-studio' ); ?></p></td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="kv2ps-archive-intro"><?php esc_html_e( 'Introduction sous le H1', 'kv2-portfolio-studio' ); ?></label></th>
+					<td><textarea class="large-text" id="kv2ps-archive-intro" name="kv2ps_settings[archive_intro]" rows="5"><?php echo esc_textarea( $settings['archive_intro'] ); ?></textarea></td>
+				</tr>
+				<tr><th scope="row"><label for="kv2ps-portfolio-page-url"><?php esc_html_e( 'Page principale des réalisations', 'kv2-portfolio-studio' ); ?></label></th><td><input class="regular-text code" id="kv2ps-portfolio-page-url" name="kv2ps_settings[portfolio_page_url]" type="url" value="<?php echo esc_attr( $settings['portfolio_page_url'] ); ?>"><p class="description"><?php esc_html_e( 'URL canonique du catalogue et destination de « Toutes les réalisations ».', 'kv2-portfolio-studio' ); ?></p></td></tr>
+				<tr><th scope="row"><label for="kv2ps-portfolio-seo-title"><?php esc_html_e( 'Titre SEO de secours', 'kv2-portfolio-studio' ); ?></label></th><td><input class="large-text" id="kv2ps-portfolio-seo-title" name="kv2ps_settings[portfolio_seo_title]" type="text" value="<?php echo esc_attr( $settings['portfolio_seo_title'] ); ?>"><p class="description"><?php esc_html_e( 'Utilisé uniquement si aucun titre Rank Math propre à la page n’est enregistré.', 'kv2-portfolio-studio' ); ?></p></td></tr>
+				<tr><th scope="row"><label for="kv2ps-portfolio-meta-description"><?php esc_html_e( 'Meta description de secours', 'kv2-portfolio-studio' ); ?></label></th><td><textarea class="large-text" id="kv2ps-portfolio-meta-description" name="kv2ps_settings[portfolio_meta_description]" rows="3"><?php echo esc_textarea( $settings['portfolio_meta_description'] ); ?></textarea><p class="description"><?php esc_html_e( 'Utilisée uniquement lorsque Rank Math ne produit aucune description.', 'kv2-portfolio-studio' ); ?></p></td></tr>
+				<tr><th colspan="2"><h2><?php esc_html_e( 'Compatibilité des URL et migration', 'kv2-portfolio-studio' ); ?></h2><p><?php echo esc_html( $roofing ? __( 'Le mode site existant protège la page /realisations-couvreur/ et réserve /chantier/ aux nouvelles études de cas.', 'kv2-portfolio-studio' ) : __( 'Le mode site existant protège une page /realisations/ déjà publiée et utilise un autre préfixe uniquement pour les futures études de cas.', 'kv2-portfolio-studio' ) ); ?></p></th></tr>
+				<tr><th scope="row"><label for="kv2ps-routing-mode"><?php esc_html_e( 'Mode de routage', 'kv2-portfolio-studio' ); ?></label></th><td><select id="kv2ps-routing-mode" name="kv2ps_settings[routing_mode]"><option value="existing_page" <?php selected( $settings['routing_mode'], 'existing_page' ); ?>><?php echo esc_html( $roofing ? __( 'Site existant — préserver /realisations-couvreur/', 'kv2-portfolio-studio' ) : __( 'Site existant — préserver /realisations/', 'kv2-portfolio-studio' ) ); ?></option><option value="standard" <?php selected( $settings['routing_mode'], 'standard' ); ?>><?php esc_html_e( 'Standard — archive KV2 sur /realisations/', 'kv2-portfolio-studio' ); ?></option></select></td></tr>
+				<tr><th scope="row"><label for="kv2ps-single-slug"><?php esc_html_e( 'Préfixe des nouvelles études de cas', 'kv2-portfolio-studio' ); ?></label></th><td><input class="regular-text code" id="kv2ps-single-slug" name="kv2ps_settings[single_slug]" type="text" value="<?php echo esc_attr( $settings['single_slug'] ); ?>"><p class="description"><?php echo esc_html( $roofing ? __( 'Utilisé seulement en mode site existant, par exemple /chantier/nom-du-projet/.', 'kv2-portfolio-studio' ) : __( 'Utilisé seulement en mode site existant, par exemple /realisation/nom-du-projet/.', 'kv2-portfolio-studio' ) ); ?></p></td></tr>
+				<tr><th scope="row"><?php esc_html_e( 'Archive technique', 'kv2-portfolio-studio' ); ?></th><td><label><input name="kv2ps_settings[redirect_archive_to_portfolio]" type="checkbox" value="1" <?php checked( $settings['redirect_archive_to_portfolio'], '1' ); ?>> <?php esc_html_e( 'Rediriger en 301 /realisations/ vers la page principale, sans toucher aux fiches individuelles', 'kv2-portfolio-studio' ); ?></label></td></tr>
+				<tr><th scope="row"><?php esc_html_e( 'Alias WP Portfolio', 'kv2-portfolio-studio' ); ?></th><td><label><input name="kv2ps_settings[legacy_shortcode_alias]" type="checkbox" value="1" <?php checked( $settings['legacy_shortcode_alias'], '1' ); ?>> <?php esc_html_e( 'Interpréter [wp_portfolio] avec KV2 uniquement lorsque WP Portfolio ne fournit plus ce shortcode', 'kv2-portfolio-studio' ); ?></label><p class="description"><?php esc_html_e( 'Laissez désactivé pendant l’import et les contrôles visuels. KV2 ne remplace jamais un shortcode encore enregistré par WP Portfolio.', 'kv2-portfolio-studio' ); ?></p></td></tr>
+				<tr><th colspan="2"><h2><?php esc_html_e( 'Affichage des réalisations', 'kv2-portfolio-studio' ); ?></h2></th></tr>
 					<tr>
 						<th scope="row"><label for="kv2ps-archive-layout"><?php esc_html_e( 'Disposition', 'kv2-portfolio-studio' ); ?></label></th>
 						<td><select id="kv2ps-archive-layout" name="kv2ps_settings[archive_layout]"><option value="grid" <?php selected( $settings['archive_layout'], 'grid' ); ?>><?php esc_html_e( 'Grille régulière', 'kv2-portfolio-studio' ); ?></option><option value="tiles" <?php selected( $settings['archive_layout'], 'tiles' ); ?>><?php esc_html_e( 'Tuiles éditoriales', 'kv2-portfolio-studio' ); ?></option><option value="masonry" <?php selected( $settings['archive_layout'], 'masonry' ); ?>><?php esc_html_e( 'Masonry', 'kv2-portfolio-studio' ); ?></option></select></td>
@@ -180,7 +213,6 @@ final class KV2PS_Admin {
 						<td><label><input name="kv2ps_settings[archive_show_filters]" type="checkbox" value="1" <?php checked( $settings['archive_show_filters'], '1' ); ?>> <?php esc_html_e( 'Afficher les filtres de services', 'kv2-portfolio-studio' ); ?></label><br><label><input name="kv2ps_settings[archive_show_search]" type="checkbox" value="1" <?php checked( $settings['archive_show_search'], '1' ); ?>> <?php esc_html_e( 'Afficher la recherche à droite', 'kv2-portfolio-studio' ); ?></label><br><label><input name="kv2ps_settings[archive_show_cta]" type="checkbox" value="1" <?php checked( $settings['archive_show_cta'], '1' ); ?>> <?php esc_html_e( 'Afficher le CTA global sous les réalisations', 'kv2-portfolio-studio' ); ?></label></td>
 					</tr>
 					<tr><th colspan="2"><h2><?php esc_html_e( 'CTA intelligent', 'kv2-portfolio-studio' ); ?></h2><p><?php esc_html_e( 'Ces valeurs deviennent les valeurs par défaut de toutes les réalisations. Elles peuvent être remplacées projet par projet.', 'kv2-portfolio-studio' ); ?></p></th></tr>
-					<tr><th scope="row"><label for="kv2ps-portfolio-page-url"><?php esc_html_e( 'Page principale des réalisations', 'kv2-portfolio-studio' ); ?></label></th><td><input class="regular-text code" id="kv2ps-portfolio-page-url" name="kv2ps_settings[portfolio_page_url]" type="url" value="<?php echo esc_attr( $settings['portfolio_page_url'] ); ?>"><p class="description"><?php esc_html_e( 'Destination du lien « Toutes les réalisations » depuis une fiche.', 'kv2-portfolio-studio' ); ?></p></td></tr>
 					<tr><th scope="row"><label for="kv2ps-cta-title"><?php esc_html_e( 'Titre du CTA', 'kv2-portfolio-studio' ); ?></label></th><td><input class="regular-text" id="kv2ps-cta-title" name="kv2ps_settings[cta_title]" type="text" value="<?php echo esc_attr( $settings['cta_title'] ); ?>"></td></tr>
 					<tr><th scope="row"><label for="kv2ps-cta-text"><?php esc_html_e( 'Texte du CTA', 'kv2-portfolio-studio' ); ?></label></th><td><textarea class="large-text" id="kv2ps-cta-text" name="kv2ps_settings[cta_text]" rows="3"><?php echo esc_textarea( $settings['cta_text'] ); ?></textarea></td></tr>
 					<tr><th scope="row"><label for="kv2ps-cta-process-title"><?php esc_html_e( 'Titre du parcours', 'kv2-portfolio-studio' ); ?></label></th><td><input class="regular-text" id="kv2ps-cta-process-title" name="kv2ps_settings[cta_process_title]" type="text" value="<?php echo esc_attr( $settings['cta_process_title'] ); ?>"></td></tr>
@@ -238,23 +270,66 @@ final class KV2PS_Admin {
 			'normal',
 			'high'
 		);
+
+		add_meta_box(
+			'kv2ps-project-location',
+			__( 'Département et code postal', 'kv2-portfolio-studio' ),
+			array( __CLASS__, 'render_location_metabox' ),
+			KV2PS_Post_Types::POST_TYPE,
+			'side',
+			'high'
+		);
+	}
+
+	public static function render_location_metabox( $post ) {
+		wp_nonce_field( 'kv2ps_save_location', 'kv2ps_location_nonce' );
+		$location = KV2PS_Post_Types::get_location( $post->ID );
+		?>
+		<p class="description"><strong><?php esc_html_e( 'Villes multiples', 'kv2-portfolio-studio' ); ?></strong><br><?php esc_html_e( 'Ajoutez les villes et zones dans le bloc « Villes » de l’éditeur. Vous pouvez en sélectionner plusieurs, par exemple Paris et Paris 16.', 'kv2-portfolio-studio' ); ?></p>
+		<div class="kv2ps-location-fields">
+			<p><label for="kv2ps-location-department"><?php esc_html_e( 'Département', 'kv2-portfolio-studio' ); ?></label><input id="kv2ps-location-department" name="kv2ps_location_department" type="text" value="<?php echo esc_attr( $location['department'] ); ?>" placeholder="Ex. 92" inputmode="text" maxlength="3"></p>
+			<p><label for="kv2ps-location-postal-code"><?php esc_html_e( 'Code postal', 'kv2-portfolio-studio' ); ?></label><input id="kv2ps-location-postal-code" name="kv2ps_location_postal_code" type="text" value="<?php echo esc_attr( $location['postal_code'] ); ?>" placeholder="Ex. 92200" autocomplete="postal-code" maxlength="12"></p>
+		</div>
+		<p class="description"><?php esc_html_e( 'Le département et le code postal complètent la réalisation sans remplacer les villes sélectionnées.', 'kv2-portfolio-studio' ); ?></p>
+		<p><label><input name="kv2ps_confidential" type="checkbox" value="1" <?php checked( get_post_meta( $post->ID, '_kv2ps_confidential', true ), '1' ); ?>> <strong><?php esc_html_e( 'Projet confidentiel : masquer l’identité et la localisation précise', 'kv2-portfolio-studio' ); ?></strong></label></p>
+		<?php
 	}
 
 	public static function render_project_metabox( $post ) {
 		wp_nonce_field( 'kv2ps_save_realisation', 'kv2ps_nonce' );
-		$fields = array(
-			'problem'      => array( 'Le besoin / problème', 'Ce que le client souhaitait résoudre.' ),
-			'intervention' => array( 'Notre intervention', 'Diagnostic, étapes, savoir-faire et choix techniques.' ),
-			'result'       => array( 'Le résultat', 'Bénéfice visible, usage retrouvé et finition.' ),
-			'materials'    => array( 'Matières et finitions', 'Tissus, bois, mousses, peintures, références utiles.' ),
+		$roofing = KV2PS_Plugin::PROFILE_ROOFING === KV2PS_Plugin::business_profile();
+		$fields  = $roofing ? array(
+			'problem'       => array( 'Le besoin / problème', 'Fuite, infiltration, défaut de couverture ou demande du client.' ),
+			'intervention'  => array( 'Notre intervention', 'Diagnostic, dépose, préparation, pose, raccords et choix techniques.' ),
+			'result'        => array( 'Le résultat', 'Étanchéité obtenue, protection du bâtiment et finition visible.' ),
+			'materials'     => array( 'Matériaux et fournitures', 'Tuiles, zinc, membranes, bois, accessoires et marques confirmées.' ),
+			'initial_state' => array( 'État initial', 'Fuites, malfaçons, usure et configuration de la toiture avant intervention.' ),
+			'constraints'   => array( 'Contraintes particulières', 'Pente, accès, surface, éléments existants, météo ou contraintes techniques.' ),
+		) : array(
+			'problem'       => array( 'Le besoin / problème', 'Ce que le client souhaitait résoudre.' ),
+			'intervention'  => array( 'Notre intervention', 'Diagnostic, étapes, savoir-faire et choix techniques.' ),
+			'result'        => array( 'Le résultat', 'Bénéfice visible, usage retrouvé et finition.' ),
+			'materials'     => array( 'Matières et finitions', 'Tissus, bois, mousses, peintures, références utiles.' ),
 			'initial_state' => array( 'État initial', 'Usure, défauts ou état de la pièce avant intervention.' ),
 			'constraints'   => array( 'Contraintes particulières', 'Délais, conservation, usage, dimensions ou contraintes techniques.' ),
 		);
+		$publication_mode = KV2PS_Compatibility::publication_mode( $post->ID );
+		$destination_candidate = esc_url_raw( get_post_meta( $post->ID, '_kv2ps_destination_candidate_url', true ) );
 		?>
+		<div class="kv2ps-subpanel">
+			<h3><?php esc_html_e( 'Mode de publication et destination', 'kv2-portfolio-studio' ); ?></h3>
+			<p><label><input name="kv2ps_publication_mode" type="radio" value="case_study" <?php checked( $publication_mode, KV2PS_Compatibility::MODE_CASE_STUDY ); ?>> <strong><?php esc_html_e( 'Étude de cas indexable', 'kv2-portfolio-studio' ); ?></strong> — <?php esc_html_e( 'fiche complète avec contenu, SEO et données structurées.', 'kv2-portfolio-studio' ); ?></label></p>
+			<p><label><input name="kv2ps_publication_mode" type="radio" value="gallery" <?php checked( $publication_mode, KV2PS_Compatibility::MODE_GALLERY ); ?>> <strong><?php esc_html_e( 'Galerie uniquement', 'kv2-portfolio-studio' ); ?></strong> — <?php esc_html_e( 'visible dans les grilles mais noindex et absente des sitemaps.', 'kv2-portfolio-studio' ); ?></label></p>
+			<p class="kv2ps-field"><label for="kv2ps-destination-url"><strong><?php esc_html_e( 'Page éditoriale existante facultative', 'kv2-portfolio-studio' ); ?></strong></label><input class="large-text code" id="kv2ps-destination-url" name="kv2ps_destination_url" type="url" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_destination_url', true ) ); ?>"><span class="description"><?php esc_html_e( 'Si renseignée, la carte ouvre cette page interne au lieu de la fiche KV2 ou de la visionneuse.', 'kv2-portfolio-studio' ); ?></span></p>
+			<?php if ( $destination_candidate ) : ?><p class="notice notice-info inline"><strong><?php esc_html_e( 'Correspondance suggérée par l’image à la une :', 'kv2-portfolio-studio' ); ?></strong> <a href="<?php echo esc_url( $destination_candidate ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $destination_candidate ); ?></a> <button class="button-link kv2ps-use-destination-candidate" data-candidate="<?php echo esc_attr( $destination_candidate ); ?>" type="button"><?php esc_html_e( 'Utiliser cette page', 'kv2-portfolio-studio' ); ?></button></p><?php endif; ?>
+		</div>
+		<h3 class="kv2ps-section-title"><?php esc_html_e( 'Contenu éditorial de la fiche', 'kv2-portfolio-studio' ); ?></h3>
+		<p class="description"><?php esc_html_e( 'Ces informations alimentent la fiche complète et la checklist. Ne renseignez que des éléments réels et vérifiables.', 'kv2-portfolio-studio' ); ?></p>
 		<div class="kv2ps-metabox-grid">
 			<?php foreach ( $fields as $key => $labels ) : ?>
 				<p class="kv2ps-field">
 					<label for="kv2ps-<?php echo esc_attr( $key ); ?>"><strong><?php echo esc_html( $labels[0] ); ?></strong></label>
+					<textarea id="kv2ps-<?php echo esc_attr( $key ); ?>" name="kv2ps_<?php echo esc_attr( $key ); ?>" rows="5"><?php echo esc_textarea( get_post_meta( $post->ID, '_kv2ps_' . $key, true ) ); ?></textarea>
 					<span class="description"><?php echo esc_html( $labels[1] ); ?></span>
 				</p>
 			<?php endforeach; ?>
@@ -263,16 +338,19 @@ final class KV2PS_Admin {
 				<input id="kv2ps-project-date" name="kv2ps_project_date" type="date" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_project_date', true ) ); ?>">
 			</p>
 			<p class="kv2ps-field"><label for="kv2ps-duration"><strong><?php esc_html_e( 'Durée de réalisation', 'kv2-portfolio-studio' ); ?></strong></label><input id="kv2ps-duration" name="kv2ps_duration" type="text" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_duration', true ) ); ?>" placeholder="Ex. 3 semaines"></p>
-			<p class="kv2ps-field"><label for="kv2ps-work-type"><strong><?php esc_html_e( 'Type de transformation', 'kv2-portfolio-studio' ); ?></strong></label><input id="kv2ps-work-type" name="kv2ps_work_type" type="text" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_work_type', true ) ); ?>" placeholder="Restauration, création sur mesure…"></p>
+			<p class="kv2ps-field"><label for="kv2ps-work-type"><strong><?php echo esc_html( $roofing ? __( 'Type d’intervention', 'kv2-portfolio-studio' ) : __( 'Type de transformation', 'kv2-portfolio-studio' ) ); ?></strong></label><input id="kv2ps-work-type" name="kv2ps_work_type" type="text" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_work_type', true ) ); ?>" placeholder="<?php echo esc_attr( $roofing ? __( 'Rénovation, réparation, remplacement…', 'kv2-portfolio-studio' ) : __( 'Restauration, création sur mesure…', 'kv2-portfolio-studio' ) ); ?>"></p>
 			<p class="kv2ps-field"><label for="kv2ps-price-range"><strong><?php esc_html_e( 'Fourchette tarifaire facultative', 'kv2-portfolio-studio' ); ?></strong></label><input id="kv2ps-price-range" name="kv2ps_price_range" type="text" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_price_range', true ) ); ?>" placeholder="Ex. 800 à 1 200 €"></p>
-			<p class="kv2ps-field"><label><input name="kv2ps_confidential" type="checkbox" value="1" <?php checked( get_post_meta( $post->ID, '_kv2ps_confidential', true ), '1' ); ?>> <strong><?php esc_html_e( 'Projet confidentiel : ne pas afficher d’identité ou de localisation précise', 'kv2-portfolio-studio' ); ?></strong></label></p>
+		</div>
+		<div class="kv2ps-gallery-grid">
+			<?php self::render_gallery_field( $post->ID, 'before', __( 'Photos avant', 'kv2-portfolio-studio' ) ); ?>
+			<?php self::render_gallery_field( $post->ID, 'after', __( 'Photos après', 'kv2-portfolio-studio' ) ); ?>
 		</div>
 
 		<div class="kv2ps-subpanel">
 			<h3><?php esc_html_e( 'Témoignage client', 'kv2-portfolio-studio' ); ?></h3>
 			<p class="kv2ps-field"><label for="kv2ps-testimonial"><strong><?php esc_html_e( 'Citation', 'kv2-portfolio-studio' ); ?></strong></label><textarea id="kv2ps-testimonial" name="kv2ps_testimonial" rows="3"><?php echo esc_textarea( get_post_meta( $post->ID, '_kv2ps_testimonial', true ) ); ?></textarea></p>
 			<div class="kv2ps-inline-fields">
-				<p><label for="kv2ps-testimonial-author"><?php esc_html_e( 'Nom affiché', 'kv2-portfolio-studio' ); ?></label><input id="kv2ps-testimonial-author" name="kv2ps_testimonial_author" type="text" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_testimonial_author', true ) ); ?>" placeholder="Cliente à Montpellier"></p>
+				<p><label for="kv2ps-testimonial-author"><?php esc_html_e( 'Nom affiché', 'kv2-portfolio-studio' ); ?></label><input id="kv2ps-testimonial-author" name="kv2ps_testimonial_author" type="text" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_testimonial_author', true ) ); ?>" placeholder="<?php echo esc_attr( $roofing ? __( 'Client à Chaville', 'kv2-portfolio-studio' ) : __( 'Cliente dans votre zone d’intervention', 'kv2-portfolio-studio' ) ); ?>"></p>
 				<p><label for="kv2ps-testimonial-source"><?php esc_html_e( 'Source', 'kv2-portfolio-studio' ); ?></label><input id="kv2ps-testimonial-source" name="kv2ps_testimonial_source" type="text" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_testimonial_source', true ) ); ?>" placeholder="Google, e-mail…"></p>
 				<p><label for="kv2ps-testimonial-source-url"><?php esc_html_e( 'Lien de l’avis', 'kv2-portfolio-studio' ); ?></label><input id="kv2ps-testimonial-source-url" name="kv2ps_testimonial_source_url" type="url" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_testimonial_source_url', true ) ); ?>"></p>
 				<p><label for="kv2ps-testimonial-rating"><?php esc_html_e( 'Note sur 5', 'kv2-portfolio-studio' ); ?></label><input id="kv2ps-testimonial-rating" max="5" min="1" name="kv2ps_testimonial_rating" type="number" value="<?php echo esc_attr( get_post_meta( $post->ID, '_kv2ps_testimonial_rating', true ) ); ?>"></p>
@@ -296,14 +374,12 @@ final class KV2PS_Admin {
 		</div>
 
 		<?php
-		self::render_gallery_field( $post->ID, 'before', __( 'Photos avant', 'kv2-portfolio-studio' ) );
-		self::render_gallery_field( $post->ID, 'after', __( 'Photos après', 'kv2-portfolio-studio' ) );
 	}
 
 	private static function render_gallery_field( $post_id, $key, $label ) {
 		$ids = KV2PS_Post_Types::sanitize_ids( get_post_meta( $post_id, '_kv2ps_' . $key . '_images', true ) );
 		?>
-		<div class="kv2ps-gallery-field" data-gallery="<?php echo esc_attr( $key ); ?>">
+		<div class="kv2ps-gallery-field" id="kv2ps-gallery-<?php echo esc_attr( $key ); ?>" data-gallery="<?php echo esc_attr( $key ); ?>">
 			<h3><?php echo esc_html( $label ); ?></h3>
 			<input class="kv2ps-gallery-ids" name="kv2ps_<?php echo esc_attr( $key ); ?>_images" type="hidden" value="<?php echo esc_attr( implode( ',', $ids ) ); ?>">
 			<div class="kv2ps-gallery-preview">
@@ -317,13 +393,16 @@ final class KV2PS_Admin {
 	}
 
 	public static function save_realisation( $post_id ) {
-		if ( ! isset( $_POST['kv2ps_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kv2ps_nonce'] ) ), 'kv2ps_save_realisation' ) ) {
-			return;
-		}
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
 		}
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		self::save_location( $post_id );
+
+		if ( ! isset( $_POST['kv2ps_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kv2ps_nonce'] ) ), 'kv2ps_save_realisation' ) ) {
 			return;
 		}
 
@@ -342,13 +421,19 @@ final class KV2PS_Admin {
 			self::update_or_delete_meta( $post_id, '_kv2ps_' . $field, $value );
 		}
 
+		$publication_mode = isset( $_POST['kv2ps_publication_mode'] ) ? sanitize_key( wp_unslash( $_POST['kv2ps_publication_mode'] ) ) : KV2PS_Compatibility::MODE_CASE_STUDY;
+		$publication_mode = in_array( $publication_mode, array( KV2PS_Compatibility::MODE_CASE_STUDY, KV2PS_Compatibility::MODE_GALLERY ), true ) ? $publication_mode : KV2PS_Compatibility::MODE_CASE_STUDY;
+		update_post_meta( $post_id, '_kv2ps_publication_mode', $publication_mode );
+		$destination_url = isset( $_POST['kv2ps_destination_url'] ) ? esc_url_raw( wp_unslash( $_POST['kv2ps_destination_url'] ) ) : '';
+		self::update_or_delete_meta( $post_id, '_kv2ps_destination_url', $destination_url );
+
 		$rating = isset( $_POST['kv2ps_testimonial_rating'] ) ? absint( $_POST['kv2ps_testimonial_rating'] ) : 0;
 		self::update_or_delete_meta( $post_id, '_kv2ps_testimonial_rating', $rating >= 1 && $rating <= 5 ? (string) $rating : '' );
 
 		$cta_action = isset( $_POST['kv2ps_cta_primary_action'] ) ? sanitize_key( wp_unslash( $_POST['kv2ps_cta_primary_action'] ) ) : '';
 		self::update_or_delete_meta( $post_id, '_kv2ps_cta_primary_action', in_array( $cta_action, array( 'click_to_chat', 'form' ), true ) ? $cta_action : '' );
 
-		foreach ( array( 'confidential', 'testimonial_consent', 'cta_override', 'cta_secondary_enabled' ) as $field ) {
+		foreach ( array( 'testimonial_consent', 'cta_override', 'cta_secondary_enabled' ) as $field ) {
 			if ( ! empty( $_POST[ 'kv2ps_' . $field ] ) ) {
 				update_post_meta( $post_id, '_kv2ps_' . $field, '1' );
 			} else {
@@ -375,12 +460,94 @@ final class KV2PS_Admin {
 		}
 	}
 
+	private static function save_location( $post_id ) {
+		$location_fields = array( 'kv2ps_location_department', 'kv2ps_location_postal_code' );
+		$has_location    = false;
+		foreach ( $location_fields as $field ) {
+			if ( array_key_exists( $field, $_POST ) ) {
+				$has_location = true;
+				break;
+			}
+		}
+		if ( ! $has_location ) {
+			return;
+		}
+
+		$location_nonce = isset( $_POST['kv2ps_location_nonce'] )
+			&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kv2ps_location_nonce'] ) ), 'kv2ps_save_location' );
+		$project_nonce  = isset( $_POST['kv2ps_nonce'] )
+			&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kv2ps_nonce'] ) ), 'kv2ps_save_realisation' );
+		if ( ! $location_nonce && ! $project_nonce ) {
+			return;
+		}
+
+		$location = array(
+			'department'  => isset( $_POST['kv2ps_location_department'] ) ? sanitize_text_field( wp_unslash( $_POST['kv2ps_location_department'] ) ) : '',
+			'postal_code' => isset( $_POST['kv2ps_location_postal_code'] ) ? sanitize_text_field( wp_unslash( $_POST['kv2ps_location_postal_code'] ) ) : '',
+		);
+		if ( ! empty( $_POST['kv2ps_confidential'] ) ) {
+			update_post_meta( $post_id, '_kv2ps_confidential', '1' );
+		} else {
+			delete_post_meta( $post_id, '_kv2ps_confidential' );
+		}
+		$result = KV2PS_Post_Types::set_location_details( $post_id, $location );
+		if ( is_wp_error( $result ) ) {
+			set_transient( 'kv2ps_location_error_' . get_current_user_id(), $result->get_error_message(), MINUTE_IN_SECONDS );
+			return;
+		}
+
+		clean_object_term_cache( $post_id, KV2PS_Post_Types::POST_TYPE );
+		clean_post_cache( $post_id );
+	}
+
+	public static function realisation_columns( $columns ) {
+		unset( $columns['taxonomy-kv2_ville'] );
+		$location_column = array( 'kv2ps_location' => __( 'Ville', 'kv2-portfolio-studio' ) );
+		if ( isset( $columns['title'] ) ) {
+			$position = array_search( 'title', array_keys( $columns ), true );
+			return array_slice( $columns, 0, $position + 1, true ) + $location_column + array_slice( $columns, $position + 1, null, true );
+		}
+		return $columns + $location_column;
+	}
+
+	public static function render_realisation_column( $column, $post_id ) {
+		if ( 'kv2ps_location' !== $column ) {
+			return;
+		}
+
+		$terms    = wp_get_post_terms( $post_id, 'kv2_ville' );
+		$location = KV2PS_Post_Types::get_location( $post_id );
+		if ( ! is_wp_error( $terms ) && $terms ) {
+			echo esc_html( implode( ', ', wp_list_pluck( $terms, 'name' ) ) );
+		} elseif ( $location['city'] ) {
+			echo esc_html( KV2PS_Post_Types::city_label( $location['city'], $location['department'] ) );
+			echo '<br><small class="description">' . esc_html__( 'À resynchroniser avec le filtre Ville', 'kv2-portfolio-studio' ) . '</small>';
+		} else {
+			echo '<span aria-hidden="true">—</span><span class="screen-reader-text">' . esc_html__( 'Aucune ville renseignée', 'kv2-portfolio-studio' ) . '</span>';
+		}
+
+		if ( $location['postal_code'] ) {
+			echo '<br><small>' . esc_html( $location['postal_code'] ) . '</small>';
+		}
+	}
+
 	private static function update_or_delete_meta( $object_id, $key, $value ) {
 		if ( '' === $value || array() === $value ) {
 			delete_post_meta( $object_id, $key );
 		} else {
 			update_post_meta( $object_id, $key, $value );
 		}
+	}
+
+	public static function location_notice() {
+		$key     = 'kv2ps_location_error_' . get_current_user_id();
+		$message = get_transient( $key );
+		if ( ! $message ) {
+			return;
+		}
+
+		delete_transient( $key );
+		echo '<div class="notice notice-error is-dismissible"><p><strong>' . esc_html__( 'Localisation non enregistrée :', 'kv2-portfolio-studio' ) . '</strong> ' . esc_html( $message ) . '</p></div>';
 	}
 
 	public static function admin_assets( $hook ) {
@@ -405,7 +572,107 @@ final class KV2PS_Admin {
 			array(
 				'mediaTitle'  => __( 'Choisir les photos du projet', 'kv2-portfolio-studio' ),
 				'mediaButton' => __( 'Utiliser ces images', 'kv2-portfolio-studio' ),
+				'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+				'checklistPending' => __( 'Modifications détectées : enregistrez la fiche pour recalculer la checklist.', 'kv2-portfolio-studio' ),
+				'checklistError'   => __( 'Impossible d’actualiser la checklist. Rechargez la page.', 'kv2-portfolio-studio' ),
 			)
+		);
+	}
+
+	public static function block_editor_assets() {
+		$screen = get_current_screen();
+		if ( ! $screen || KV2PS_Post_Types::POST_TYPE !== $screen->post_type ) {
+			return;
+		}
+
+		$taxonomy = get_taxonomy( 'kv2_ville' );
+		$terms     = get_terms(
+			array(
+				'taxonomy'   => 'kv2_ville',
+				'hide_empty' => false,
+				'orderby'    => 'name',
+				'order'      => 'ASC',
+				'number'     => 0,
+			)
+		);
+		$terms_error = is_wp_error( $terms );
+		$city_terms  = array();
+		foreach ( $terms_error ? array() : $terms as $term ) {
+			$name = isset( $term->name ) ? trim( sanitize_text_field( $term->name ) ) : '';
+			if ( $name && ! empty( $term->term_id ) ) {
+				$city_terms[] = array(
+					'id'   => (int) $term->term_id,
+					'name' => $name,
+				);
+			}
+		}
+
+		wp_enqueue_script(
+			'kv2ps-city-selector',
+			KV2PS_URL . 'assets/city-selector.js',
+			array( 'wp-components', 'wp-core-data', 'wp-data', 'wp-editor', 'wp-element', 'wp-hooks', 'wp-html-entities' ),
+			KV2PS_VERSION,
+			true
+		);
+		wp_localize_script(
+			'kv2ps-city-selector',
+			'kv2psCitySelector',
+			array(
+				'taxonomy'     => 'kv2_ville',
+				'terms'        => $city_terms,
+				'termsError'   => $terms_error ? __( 'Impossible de préparer la liste des villes. Rechargez l’éditeur.', 'kv2-portfolio-studio' ) : '',
+				'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+				'nonce'        => wp_create_nonce( 'kv2ps_city_selector' ),
+				'canCreate'    => $taxonomy && current_user_can( $taxonomy->cap->manage_terms ),
+				'label'        => __( 'Ajouter ou rechercher une ville', 'kv2-portfolio-studio' ),
+				'placeholder'  => __( 'Commencez à saisir le nom d’une ville…', 'kv2-portfolio-studio' ),
+				'help'         => __( 'Sélectionnez une ou plusieurs villes existantes, ou saisissez un nouveau nom puis appuyez sur Entrée.', 'kv2-portfolio-studio' ),
+				'saving'       => __( 'Création de la nouvelle ville…', 'kv2-portfolio-studio' ),
+				'saveError'    => __( 'Impossible de créer cette ville.', 'kv2-portfolio-studio' ),
+				'createDenied' => __( 'Vous pouvez sélectionner une ville existante, mais votre compte ne peut pas en créer une nouvelle.', 'kv2-portfolio-studio' ),
+				'added'        => __( 'Ville ajoutée.', 'kv2-portfolio-studio' ),
+				'removed'      => __( 'Ville retirée.', 'kv2-portfolio-studio' ),
+				'remove'       => __( 'Retirer la ville', 'kv2-portfolio-studio' ),
+				'invalid'      => __( 'Nom de ville invalide.', 'kv2-portfolio-studio' ),
+			)
+		);
+	}
+
+	public static function ajax_create_city() {
+		check_ajax_referer( 'kv2ps_city_selector', 'nonce' );
+
+		$taxonomy = get_taxonomy( 'kv2_ville' );
+		if ( ! $taxonomy || ! current_user_can( $taxonomy->cap->manage_terms ) ) {
+			wp_send_json_error( array( 'message' => __( 'Vous n’avez pas l’autorisation de créer une ville.', 'kv2-portfolio-studio' ) ), 403 );
+		}
+
+		$city = self::create_city( isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : '' );
+		if ( is_wp_error( $city ) ) {
+			wp_send_json_error( array( 'message' => $city->get_error_message() ), 400 );
+		}
+
+		wp_send_json_success( array( 'term' => $city ) );
+	}
+
+	public static function create_city( $raw_name ) {
+		$name = trim( sanitize_text_field( $raw_name ) );
+		if ( ! $name ) {
+			return new WP_Error( 'kv2ps_empty_city', __( 'Le nom de la ville est vide.', 'kv2-portfolio-studio' ) );
+		}
+
+		$term_id = KV2PS_Post_Types::ensure_term( $name, 'kv2_ville', KV2PS_Post_Types::city_slug( $name ) );
+		if ( is_wp_error( $term_id ) ) {
+			return $term_id;
+		}
+
+		$term = get_term( $term_id, 'kv2_ville' );
+		if ( ! $term || is_wp_error( $term ) ) {
+			return new WP_Error( 'kv2ps_city_read_failed', __( 'La ville a été créée mais ne peut pas être relue.', 'kv2-portfolio-studio' ) );
+		}
+
+		return array(
+			'id'   => (int) $term->term_id,
+			'name' => sanitize_text_field( $term->name ),
 		);
 	}
 
@@ -437,11 +704,16 @@ final class KV2PS_Admin {
 		if ( ! current_user_can( 'manage_categories' ) ) {
 			return;
 		}
-		$url = isset( $_POST['kv2ps_landing_url'] ) ? esc_url_raw( wp_unslash( $_POST['kv2ps_landing_url'] ) ) : '';
+		$url        = isset( $_POST['kv2ps_landing_url'] ) ? esc_url_raw( wp_unslash( $_POST['kv2ps_landing_url'] ) ) : '';
+		$stored_url = (string) get_term_meta( $term_id, KV2PS_Internal_Links::URL_META, true );
+		$was_auto   = (bool) get_term_meta( $term_id, KV2PS_Internal_Links::AUTO_META, true );
+		if ( ! $was_auto || $url !== $stored_url ) {
+			delete_term_meta( $term_id, KV2PS_Internal_Links::AUTO_META );
+		}
 		if ( $url ) {
-			update_term_meta( $term_id, '_kv2ps_landing_url', $url );
+			update_term_meta( $term_id, KV2PS_Internal_Links::URL_META, $url );
 		} else {
-			delete_term_meta( $term_id, '_kv2ps_landing_url' );
+			delete_term_meta( $term_id, KV2PS_Internal_Links::URL_META );
 		}
 	}
 }
