@@ -1,4 +1,4 @@
-# KV2 Portfolio Studio 1.1.25
+# KV2 Portfolio Studio 1.1.26
 
 Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio sans sacrifier le référencement ni les données existantes.
 
@@ -27,7 +27,7 @@ Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio 
 ## Installation
 
 1. Dans WordPress, ouvrir **Extensions → Ajouter une extension → Téléverser une extension**.
-2. Choisir `kv2-portfolio-studio-v1.1.25.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
+2. Choisir `kv2-portfolio-studio-v1.1.26.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
 3. Ouvrir **Réalisations → Réglages** et configurer l’affichage, Click to Chat, l’URL du formulaire et les droits des images.
 4. Dans Rank Math, vérifier que les études de cas indexables sont incluses au sitemap. Les éléments « Galerie uniquement » sont automatiquement exclus des sitemaps WordPress et Rank Math.
 5. Publier un projet test, puis contrôler l’affichage, le canonical et le JSON-LD avec Rich Snippet Sniper.
@@ -84,6 +84,8 @@ La V1.1.18 neutralise le padding de carte très important ajouté par Astra sur 
 La V1.1.19 rend la sauvegarde de la localisation indépendante du bloc éditorial principal. Le sommaire des réalisations possède désormais sa propre colonne « Ville », affiche aussi le code postal disponible et signale les anciennes données qui doivent être resynchronisées avec la taxonomie utilisée par les shortcodes.
 
 La V1.1.20 remplace le champ ville individuel par le bloc WordPress « Villes » multivalué. Une fiche peut être classée dans plusieurs niveaux géographiques, par exemple Paris et Paris 16, tandis que le département et le code postal restent des compléments séparés.
+
+La V1.1.26 diffère la mise à niveau interne jusqu’à l’événement `init`, lorsque WordPress a terminé d’initialiser les permaliens. Elle vérifie également la présence de l’objet de réécriture avant toute détection de page. Cette double protection corrige l’erreur critique `get_page_permastruct() on null` observée lors de l’activation sur Tapissier Fabulet.
 
 La V1.1.25 conserve le sélecteur multiville de la 1.1.24, mais injecte directement les villes existantes au chargement de l’éditeur. Elle ne dépend donc plus de la route REST des termes qui échouait sur Tapissier Laurot. La création d’une nouvelle ville utilise une action d’administration authentifiée et protégée par nonce. L’autocomplétion, les villes déjà affectées et la sélection multiple sont conservées sans migration ni perte de données.
 

@@ -8,6 +8,8 @@ class WP_Post {
 	public $post_status = 'publish';
 }
 
+class WP_Rewrite {}
+
 function plugin_dir_path( $file ) {
 	return dirname( $file ) . '/';
 }
@@ -211,6 +213,7 @@ $GLOBALS['kv2ps_test_terms']       = array();
 $GLOBALS['kv2ps_test_assignments'] = array();
 $GLOBALS['kv2ps_test_meta']        = array();
 $GLOBALS['wpdb']                   = new KV2PS_Test_WPDB();
+$GLOBALS['wp_rewrite']             = new WP_Rewrite();
 
 require dirname( __DIR__ ) . '/kv2-portfolio-studio.php';
 
@@ -257,6 +260,12 @@ $defaults = KV2PS_Plugin::default_settings();
 if ( 'existing_page' !== $defaults['routing_mode'] || 'https://example.test/realisations/' !== $defaults['portfolio_page_url'] || '0' !== $defaults['redirect_archive_to_portfolio'] ) {
 	throw new RuntimeException( 'An existing /realisations/ Page was not protected.' );
 }
+$GLOBALS['wp_rewrite'] = null;
+$defaults = KV2PS_Plugin::default_settings();
+if ( 'standard' !== $defaults['routing_mode'] || 'https://example.test/realisation-tapisserie/' !== $defaults['portfolio_page_url'] ) {
+	throw new RuntimeException( 'Early defaults must not resolve a Page before WordPress rewrite initialization.' );
+}
+$GLOBALS['wp_rewrite'] = new WP_Rewrite();
 $GLOBALS['kv2ps_page_path'] = 'realisation-tapisserie';
 $defaults = KV2PS_Plugin::default_settings();
 if ( 'standard' !== $defaults['routing_mode'] || 'https://example.test/realisation-tapisserie/' !== $defaults['portfolio_page_url'] ) {

@@ -14,7 +14,9 @@ final class KV2PS_Plugin {
 	}
 
 	private function __construct() {
-		add_action( 'plugins_loaded', array( $this, 'maybe_upgrade' ), 5 );
+		// Permalink helpers used by the upgrader require WordPress' rewrite
+		// object, which is not guaranteed to exist during plugins_loaded.
+		add_action( 'init', array( $this, 'maybe_upgrade' ), 1 );
 		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
 		add_action( 'init', array( 'KV2PS_Post_Types', 'register' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_frontend_assets' ) );
@@ -201,6 +203,12 @@ final class KV2PS_Plugin {
 		if ( ! function_exists( 'get_page_by_path' ) || ! function_exists( 'get_permalink' ) ) {
 			return '';
 		}
+
+		global $wp_rewrite;
+		if ( ! $wp_rewrite instanceof WP_Rewrite ) {
+			return '';
+		}
+
 		$page = get_page_by_path( $path, OBJECT, 'page' );
 		if ( $page instanceof WP_Post && 'publish' === $page->post_status ) {
 			return (string) get_permalink( $page->ID );

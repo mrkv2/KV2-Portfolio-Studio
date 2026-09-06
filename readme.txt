@@ -3,7 +3,7 @@ Contributors: kv2
 Tags: portfolio, seo, image metadata, exif, rank math
 Requires at least: 6.5
 Requires PHP: 7.4
-Stable tag: 1.1.25
+Stable tag: 1.1.26
 License: Proprietary
 
 Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonnées d’images avec ChatGPT.
@@ -20,6 +20,11 @@ Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonné
 Le plugin ne supprime aucune donnée à la désinstallation. Le module EXIF lit le fichier original mais ne le réécrit pas dans la version 1.1.
 
 == Changelog ==
+
+= 1.1.26 =
+* Décale la mise à niveau interne jusqu’à l’initialisation complète de WordPress.
+* Empêche tout appel aux permaliens tant que l’objet de réécriture WordPress n’est pas disponible.
+* Corrige l’erreur critique `get_page_permastruct() on null` rencontrée lors de l’activation sur Tapissier Fabulet.
 
 = 1.1.25 =
 * Injecte directement les villes existantes dans l’éditeur sans dépendre de la route REST des termes.

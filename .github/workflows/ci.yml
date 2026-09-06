@@ -39,3 +39,5 @@ jobs:
         run: php tests/city-selector-contract.php
       - name: City selector JavaScript
         run: node --check assets/city-selector.js && node tests/city-selector-node-test.js
+      - name: Upgrade timing contract
+        run: php tests/upgrade-timing-contract.php
