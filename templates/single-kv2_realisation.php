@@ -215,18 +215,6 @@ while ( have_posts() ) :
 			'posts_per_page'      => 3,
 			'post__not_in'        => array( $post_id ),
 			'ignore_sticky_posts' => true,
-			'meta_query'          => array(
-				'relation' => 'AND',
-				array(
-					'key'     => '_thumbnail_id',
-					'compare' => 'EXISTS',
-				),
-				array(
-					'relation' => 'OR',
-					array( 'key' => '_kv2ps_publication_mode', 'compare' => 'NOT EXISTS' ),
-					array( 'key' => '_kv2ps_publication_mode', 'value' => KV2PS_Compatibility::MODE_GALLERY, 'compare' => '!=' ),
-				),
-			),
 		);
 		if ( ! is_wp_error( $service_ids ) && $service_ids ) {
 			$related_args['tax_query'] = array(

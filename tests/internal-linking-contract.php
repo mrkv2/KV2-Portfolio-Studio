@@ -28,6 +28,9 @@ if ( false !== strpos( $template, "\$links[] = is_wp_error( \$url )" ) ) {
 if ( false === strpos( $template, "'taxonomy' => 'kv2_service'" ) || false === strpos( $template, "'posts_per_page'      => 3" ) ) {
 	$errors[] = 'Three related realizations must remain filtered by service.';
 }
+if ( false !== strpos( $template, "'key' => '_kv2ps_publication_mode'" ) || false !== strpos( $template, "'key'     => '_thumbnail_id'" ) ) {
+	$errors[] = 'Related realizations must include migrated gallery items and image fallbacks.';
+}
 
 if ( $errors ) {
 	fwrite( STDERR, implode( PHP_EOL, $errors ) . PHP_EOL );

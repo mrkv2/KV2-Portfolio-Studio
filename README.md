@@ -1,8 +1,8 @@
-# KV2 Portfolio Studio 1.2.1
+# KV2 Portfolio Studio 1.2.2
 
 Un portfolio WordPress natif pensé pour remplacer progressivement Astra Portfolio sans sacrifier le référencement ni les données existantes.
 
-La V1.2.1 réunit les deux lignées du plugin et automatise, pour le profil tapisserie, les liens des réalisations vers les pages commerciales de service, les véritables pages de ville et trois réalisations du même service. Les URL définies manuellement sur un terme restent prioritaires.
+La V1.2.2 réunit les deux lignées du plugin et automatise, pour le profil tapisserie, les liens des réalisations vers les pages commerciales de service, les véritables pages de ville et trois réalisations du même service. Les anciennes réalisations migrées en mode galerie participent désormais aussi à cette sélection. Les URL définies manuellement sur un terme restent prioritaires.
 
 ## Profil ETS Mon Toit
 
@@ -41,7 +41,7 @@ La V1.2 ajoute un profil métier **Couverture et zinguerie**, détecté automati
 ## Installation
 
 1. Dans WordPress, ouvrir **Extensions → Ajouter une extension → Téléverser une extension**.
-2. Choisir `kv2-portfolio-studio-v1.2.1.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
+2. Choisir `kv2-portfolio-studio-v1.2.2.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
 3. Ouvrir **Réalisations → Réglages**, vérifier le profil métier, puis contrôler l’affichage, Click to Chat, l’URL du formulaire et les droits des images.
 4. Dans Rank Math, vérifier que les études de cas indexables sont incluses au sitemap. Les éléments « Galerie uniquement » sont automatiquement exclus des sitemaps WordPress et Rank Math.
 5. Publier un projet test, puis contrôler l’affichage, le canonical et le JSON-LD avec Rich Snippet Sniper.
