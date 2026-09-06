@@ -3,7 +3,7 @@ Contributors: kv2
 Tags: portfolio, seo, image metadata, exif, rank math
 Requires at least: 6.5
 Requires PHP: 7.4
-Stable tag: 1.1.18
+Stable tag: 1.1.25
 License: Proprietary
 
 Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonnées d’images avec ChatGPT.
@@ -21,10 +21,38 @@ Le plugin ne supprime aucune donnée à la désinstallation. Le module EXIF lit 
 
 == Changelog ==
 
+= 1.1.25 =
+* Injecte directement les villes existantes dans l’éditeur sans dépendre de la route REST des termes.
+* Corrige le message « Impossible de charger les villes existantes » observé sur Tapissier Laurot.
+* Crée les nouvelles villes via une action d’administration authentifiée et protégée par nonce.
+* Conserve l’autocomplétion, les villes déjà affectées et la sélection multiple de la 1.1.24.
+
+= 1.1.24 =
+* Rétablit l’autocomplétion des villes existantes avec plusieurs sélections.
+* Réaffiche comme jetons les villes déjà affectées à la réalisation.
+* Permet de créer une nouvelle ville directement dans le même champ.
+* Filtre les réponses REST incomplètes avant le composant WordPress afin d’éviter l’erreur `undefined.normalize`.
+* Retire le sélecteur hiérarchique de la 1.1.23 sans migrer ni supprimer les villes existantes.
+
+= 1.1.22 =
+* Corrige le retour vers `/realisations-tapissier/` uniquement lors de l’affichage d’une fiche, après le chargement complet de WordPress.
+* Supprime la migration anticipée de la 1.1.21 qui pouvait provoquer une erreur critique pendant l’initialisation du site.
+* Reste générique : la correction ne s’applique que si la page publiée existe et si l’ancien réglage par défaut est encore utilisé.
+
+= 1.1.20 =
+* Rétablit le bloc WordPress Villes afin d’associer plusieurs zones à une même réalisation.
+* Permet par exemple d’affecter simultanément Paris et Paris 16 pour alimenter les deux portfolios locaux.
+* Supprime le champ ville individuel qui doublonnait le bloc multivalué.
+* Conserve département et code postal dans un bloc complémentaire sans remplacer les villes sélectionnées.
+
+= 1.1.19 =
+* Sépare la sauvegarde de la localisation de celle du bloc éditorial afin que la ville soit toujours prise en compte.
+* Ajoute une colonne Ville explicite dans le sommaire des réalisations, avec département et code postal.
+* Signale une ancienne localisation enregistrée en métadonnée mais non rattachée au filtre Ville.
+
 = 1.1.18 =
 * Neutralise le padding injecté par Astra dans chaque carte du portfolio.
 * Rétablit les images à la largeur complète de leur colonne sur les pages en conteneur séparé.
-* Ignore les entrées de taxonomie invalides avant le rendu des cartes afin d’éviter les avertissements PHP répétés et les réponses 502 liées à des en-têtes FastCGI surdimensionnés.
 
 = 1.1.17 =
 * Adapte le nombre de colonnes à la largeur réelle du bloc portfolio, y compris dans Elementor.

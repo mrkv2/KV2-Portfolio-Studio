@@ -81,11 +81,6 @@ final class KV2PS_Post_Types {
 				'rewrite'           => $existing_page ? false : array( 'slug' => $config[3], 'with_front' => false ),
 			);
 
-			if ( 'kv2_ville' === $taxonomy ) {
-				// La localisation est saisie une seule fois dans un bloc dédié.
-				$args['meta_box_cb'] = false;
-			}
-
 			register_taxonomy( $taxonomy, self::POST_TYPE, $args );
 		}
 
@@ -208,13 +203,11 @@ final class KV2PS_Post_Types {
 			'postal_code' => self::sanitize_postal_code( get_post_meta( $post_id, '_kv2ps_postal_code', true ) ),
 		);
 
-		if ( ! $location['city'] ) {
-			$terms = wp_get_post_terms( $post_id, 'kv2_ville' );
-			if ( ! is_wp_error( $terms ) && $terms ) {
-				$parsed                  = self::parse_city_label( $terms[0]->name );
-				$location['city']        = $parsed['city'];
-				$location['department']  = $location['department'] ?: $parsed['department'];
-			}
+		$terms = wp_get_post_terms( $post_id, 'kv2_ville' );
+		if ( ! is_wp_error( $terms ) && $terms ) {
+			$parsed                 = self::parse_city_label( $terms[0]->name );
+			$location['city']       = $parsed['city'];
+			$location['department'] = $location['department'] ?: $parsed['department'];
 		}
 
 		return $location;
@@ -246,7 +239,7 @@ final class KV2PS_Post_Types {
 			return $term_id;
 		}
 
-		$assigned = wp_set_object_terms( $post_id, array( $term_id ), 'kv2_ville', false );
+		$assigned = wp_set_object_terms( $post_id, array( $term_id ), 'kv2_ville', true );
 		if ( is_wp_error( $assigned ) ) {
 			return $assigned;
 		}
@@ -256,6 +249,17 @@ final class KV2PS_Post_Types {
 		self::update_or_delete_meta( $post_id, '_kv2ps_postal_code', $postal_code );
 
 		return $term_id;
+	}
+
+	public static function set_location_details( $post_id, $location ) {
+		$location    = is_array( $location ) ? $location : array();
+		$department  = isset( $location['department'] ) ? self::sanitize_department( $location['department'] ) : '';
+		$postal_code = isset( $location['postal_code'] ) ? self::sanitize_postal_code( $location['postal_code'] ) : '';
+
+		self::update_or_delete_meta( $post_id, '_kv2ps_department', $department );
+		self::update_or_delete_meta( $post_id, '_kv2ps_postal_code', $postal_code );
+
+		return true;
 	}
 
 	public static function ensure_term( $name, $taxonomy, $slug = '' ) {

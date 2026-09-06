@@ -183,6 +183,12 @@
 .kv2ps-output {
   margin-top: 18px;
 }
+.wp-list-table .column-kv2ps_location {
+  width: 15%;
+}
+.wp-list-table .column-kv2ps_location .description {
+  color: #8a2424;
+}
 @media (max-width: 900px) {
   .kv2ps-tools-grid,
   .kv2ps-metabox-grid,
@@ -191,4 +197,7 @@
   .kv2ps-location-fields {
     grid-template-columns: 1fr;
   }
+}
+.kv2ps-city-selector__saving {
+  margin-top: 8px;
 }

@@ -50,6 +50,9 @@ $required = array(
 	'tests/shortcode-filters-contract.php',
 	'tests/single-layout-contract.php',
 	'tests/editor-experience-contract.php',
+	'tests/city-selector-contract.php',
+	'tests/city-selector-node-test.js',
+	'assets/city-selector.js',
 	'templates/single-kv2_realisation.php',
 	'templates/archive-kv2_realisation.php',
 );

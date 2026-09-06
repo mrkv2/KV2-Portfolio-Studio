@@ -16,6 +16,15 @@ while ( have_posts() ) :
 	$project_date = get_post_meta( $post_id, '_kv2ps_project_date', true );
 	$confidential = (bool) get_post_meta( $post_id, '_kv2ps_confidential', true );
 	$portfolio_url = ! empty( $settings['portfolio_page_url'] ) ? esc_url_raw( $settings['portfolio_page_url'] ) : get_post_type_archive_link( KV2PS_Post_Types::POST_TYPE );
+	if ( rtrim( (string) $portfolio_url, '/' ) === rtrim( home_url( '/realisation-tapisserie/' ), '/' ) ) {
+		$preferred_portfolio_page = get_page_by_path( 'realisations-tapissier', OBJECT, 'page' );
+		if ( $preferred_portfolio_page instanceof WP_Post && 'publish' === $preferred_portfolio_page->post_status ) {
+			$preferred_portfolio_url = get_permalink( $preferred_portfolio_page->ID );
+			if ( $preferred_portfolio_url ) {
+				$portfolio_url = $preferred_portfolio_url;
+			}
+		}
+	}
 	$service_terms = get_the_terms( $post_id, 'kv2_service' );
 	$story_labels  = array(
 		'problem'      => __( 'Le besoin', 'kv2-portfolio-studio' ),

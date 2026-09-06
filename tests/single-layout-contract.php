@@ -14,6 +14,7 @@ $contracts = array(
 	array( $template, '$hero_image_id = (int) reset( $after_ids );', 'The hero must fall back to the first after image.' ),
 	array( $template, "'loading' => 'eager'", 'The hero image must be loaded eagerly.' ),
 	array( $template, 'Retour à toutes les réalisations', 'The single template must provide a route back to the configured portfolio.' ),
+	array( $template, "get_page_by_path( 'realisations-tapissier', OBJECT, 'page' )", 'The stale default return URL must be resolved only while rendering a single project.' ),
 	array( $template, "__( 'Résultat final'", 'A project with only after images must not be labelled before/after.' ),
 	array( $css, '.kv2ps-project-layout--content-only', 'A content-only project must use the available width.' ),
 	array( $css, '.kv2ps-story--count-2', 'Two story cards must not leave an empty third column.' ),

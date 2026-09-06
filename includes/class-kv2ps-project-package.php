@@ -196,7 +196,7 @@ final class KV2PS_Project_Package {
 		$location = isset( $project['location'] ) && is_array( $project['location'] ) ? $project['location'] : array();
 		self::apply_testimonial( $post_id, isset( $project['testimonial'] ) ? $project['testimonial'] : array(), $dry_run, $report );
 		self::apply_cta( $post_id, isset( $project['cta'] ) ? $project['cta'] : array(), $dry_run, $report );
-		self::apply_taxonomies( $post_id, isset( $project['taxonomies'] ) ? $project['taxonomies'] : array(), $dry_run, $report, ! empty( $location['city'] ) );
+		self::apply_taxonomies( $post_id, isset( $project['taxonomies'] ) ? $project['taxonomies'] : array(), $dry_run, $report );
 		self::apply_location( $post_id, $location, $dry_run, $report );
 		self::apply_seo( $post_id, isset( $project['seo'] ) ? $project['seo'] : array(), $dry_run );
 		self::apply_images( $post_id, isset( $project['images'] ) ? $project['images'] : array(), $dry_run, $report );
@@ -310,7 +310,7 @@ final class KV2PS_Project_Package {
 		}
 	}
 
-	private static function apply_taxonomies( $post_id, $taxonomies, $dry_run, &$report, $skip_city = false ) {
+	private static function apply_taxonomies( $post_id, $taxonomies, $dry_run, &$report ) {
 		if ( ! is_array( $taxonomies ) ) {
 			return;
 		}
@@ -322,7 +322,7 @@ final class KV2PS_Project_Package {
 			'techniques' => 'kv2_technique',
 		);
 		foreach ( $map as $key => $taxonomy ) {
-			if ( ( $skip_city && 'kv2_ville' === $taxonomy ) || empty( $taxonomies[ $key ] ) || ! is_array( $taxonomies[ $key ] ) ) {
+			if ( empty( $taxonomies[ $key ] ) || ! is_array( $taxonomies[ $key ] ) ) {
 				continue;
 			}
 			$term_ids = array();

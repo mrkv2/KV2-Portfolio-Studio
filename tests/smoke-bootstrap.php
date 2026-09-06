@@ -106,8 +106,12 @@ function wp_update_term( $term_id, $taxonomy, $args ) {
 	}
 	return array( 'term_id' => $term_id, 'term_taxonomy_id' => $term_id );
 }
-function wp_set_object_terms( $post_id, $term_ids, $taxonomy ) {
-	$GLOBALS['kv2ps_test_assignments'][ $post_id ][ $taxonomy ] = array_map( 'absint', (array) $term_ids );
+function wp_set_object_terms( $post_id, $term_ids, $taxonomy, $append = false ) {
+	$term_ids = array_map( 'absint', (array) $term_ids );
+	if ( $append && ! empty( $GLOBALS['kv2ps_test_assignments'][ $post_id ][ $taxonomy ] ) ) {
+		$term_ids = array_values( array_unique( array_merge( $GLOBALS['kv2ps_test_assignments'][ $post_id ][ $taxonomy ], $term_ids ) ) );
+	}
+	$GLOBALS['kv2ps_test_assignments'][ $post_id ][ $taxonomy ] = $term_ids;
 	return $GLOBALS['kv2ps_test_assignments'][ $post_id ][ $taxonomy ];
 }
 function wp_get_post_terms( $post_id, $taxonomy ) {
@@ -276,6 +280,21 @@ if ( 1 !== $second_location_result || 1 !== count( $GLOBALS['kv2ps_test_terms'] 
 $stored_location = KV2PS_Post_Types::get_location( 42 );
 if ( 'Ville Exemple' !== $stored_location['city'] || '92' !== $stored_location['department'] || '92000' !== $stored_location['postal_code'] ) {
 	throw new RuntimeException( 'Location metadata was not stored consistently.' );
+}
+$paris_result = KV2PS_Post_Types::set_location(
+	46,
+	array( 'city' => 'Paris', 'department' => '75', 'postal_code' => '75016' )
+);
+$paris_16_result = KV2PS_Post_Types::set_location(
+	46,
+	array( 'city' => 'Paris 16', 'department' => '75', 'postal_code' => '75016' )
+);
+if ( is_wp_error( $paris_result ) || is_wp_error( $paris_16_result ) || 2 !== count( $GLOBALS['kv2ps_test_assignments'][46]['kv2_ville'] ) ) {
+	throw new RuntimeException( 'A realization must accept several city terms.' );
+}
+$details_result = KV2PS_Post_Types::set_location_details( 46, array( 'department' => '75', 'postal_code' => '75016' ) );
+if ( true !== $details_result || 2 !== count( $GLOBALS['kv2ps_test_assignments'][46]['kv2_ville'] ) ) {
+	throw new RuntimeException( 'Saving department and postal code replaced the selected cities.' );
 }
 $first_homonym = KV2PS_Post_Types::set_location(
 	44,

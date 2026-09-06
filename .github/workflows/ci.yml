@@ -35,3 +35,7 @@ jobs:
         run: php tests/single-layout-contract.php
       - name: Editor experience contract
         run: php tests/editor-experience-contract.php
+      - name: City selector contract
+        run: php tests/city-selector-contract.php
+      - name: City selector JavaScript
+        run: node --check assets/city-selector.js && node tests/city-selector-node-test.js

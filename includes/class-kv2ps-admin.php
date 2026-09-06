@@ -11,7 +11,11 @@ final class KV2PS_Admin {
 		add_action( 'add_meta_boxes_' . KV2PS_Post_Types::POST_TYPE, array( __CLASS__, 'add_meta_boxes' ) );
 		add_action( 'save_post_' . KV2PS_Post_Types::POST_TYPE, array( __CLASS__, 'save_realisation' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_assets' ) );
+		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'block_editor_assets' ) );
+		add_action( 'wp_ajax_kv2ps_create_city', array( __CLASS__, 'ajax_create_city' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'location_notice' ) );
+		add_filter( 'manage_' . KV2PS_Post_Types::POST_TYPE . '_posts_columns', array( __CLASS__, 'realisation_columns' ), 20 );
+		add_action( 'manage_' . KV2PS_Post_Types::POST_TYPE . '_posts_custom_column', array( __CLASS__, 'render_realisation_column' ), 10, 2 );
 
 		foreach ( KV2PS_Post_Types::taxonomies() as $taxonomy ) {
 			add_action( $taxonomy . '_add_form_fields', array( __CLASS__, 'term_add_fields' ) );
@@ -262,7 +266,7 @@ final class KV2PS_Admin {
 
 		add_meta_box(
 			'kv2ps-project-location',
-			__( 'Localisation de la réalisation', 'kv2-portfolio-studio' ),
+			__( 'Département et code postal', 'kv2-portfolio-studio' ),
 			array( __CLASS__, 'render_location_metabox' ),
 			KV2PS_Post_Types::POST_TYPE,
 			'side',
@@ -271,29 +275,15 @@ final class KV2PS_Admin {
 	}
 
 	public static function render_location_metabox( $post ) {
+		wp_nonce_field( 'kv2ps_save_location', 'kv2ps_location_nonce' );
 		$location = KV2PS_Post_Types::get_location( $post->ID );
-		$cities   = get_terms(
-			array(
-				'taxonomy'   => 'kv2_ville',
-				'hide_empty' => false,
-				'orderby'    => 'name',
-				'order'      => 'ASC',
-			)
-		);
-		$cities = is_wp_error( $cities ) ? array() : $cities;
 		?>
-		<p class="kv2ps-field">
-			<label for="kv2ps-location-city"><strong><?php esc_html_e( 'Ville ou arrondissement', 'kv2-portfolio-studio' ); ?></strong></label>
-			<input id="kv2ps-location-city" list="kv2ps-city-options" name="kv2ps_location_city" type="text" value="<?php echo esc_attr( $location['city'] ); ?>" placeholder="Ex. Paris 16e" autocomplete="address-level2">
-			<datalist id="kv2ps-city-options">
-				<?php foreach ( $cities as $city_term ) : ?><option value="<?php echo esc_attr( $city_term->name ); ?>"></option><?php endforeach; ?>
-			</datalist>
-		</p>
+		<p class="description"><strong><?php esc_html_e( 'Villes multiples', 'kv2-portfolio-studio' ); ?></strong><br><?php esc_html_e( 'Ajoutez les villes et zones dans le bloc « Villes » de l’éditeur. Vous pouvez en sélectionner plusieurs, par exemple Paris et Paris 16.', 'kv2-portfolio-studio' ); ?></p>
 		<div class="kv2ps-location-fields">
 			<p><label for="kv2ps-location-department"><?php esc_html_e( 'Département', 'kv2-portfolio-studio' ); ?></label><input id="kv2ps-location-department" name="kv2ps_location_department" type="text" value="<?php echo esc_attr( $location['department'] ); ?>" placeholder="Ex. 92" inputmode="text" maxlength="3"></p>
 			<p><label for="kv2ps-location-postal-code"><?php esc_html_e( 'Code postal', 'kv2-portfolio-studio' ); ?></label><input id="kv2ps-location-postal-code" name="kv2ps_location_postal_code" type="text" value="<?php echo esc_attr( $location['postal_code'] ); ?>" placeholder="Ex. 92200" autocomplete="postal-code" maxlength="12"></p>
 		</div>
-		<p class="description"><?php esc_html_e( 'Saisissez la ville une seule fois. Le plugin crée ou réutilise le bon terme et garde le code postal séparé.', 'kv2-portfolio-studio' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Le département et le code postal complètent la réalisation sans remplacer les villes sélectionnées.', 'kv2-portfolio-studio' ); ?></p>
 		<p><label><input name="kv2ps_confidential" type="checkbox" value="1" <?php checked( get_post_meta( $post->ID, '_kv2ps_confidential', true ), '1' ); ?>> <strong><?php esc_html_e( 'Projet confidentiel : masquer l’identité et la localisation précise', 'kv2-portfolio-studio' ); ?></strong></label></p>
 		<?php
 	}
@@ -388,13 +378,16 @@ final class KV2PS_Admin {
 	}
 
 	public static function save_realisation( $post_id ) {
-		if ( ! isset( $_POST['kv2ps_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kv2ps_nonce'] ) ), 'kv2ps_save_realisation' ) ) {
-			return;
-		}
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
 		}
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		self::save_location( $post_id );
+
+		if ( ! isset( $_POST['kv2ps_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kv2ps_nonce'] ) ), 'kv2ps_save_realisation' ) ) {
 			return;
 		}
 
@@ -425,22 +418,12 @@ final class KV2PS_Admin {
 		$cta_action = isset( $_POST['kv2ps_cta_primary_action'] ) ? sanitize_key( wp_unslash( $_POST['kv2ps_cta_primary_action'] ) ) : '';
 		self::update_or_delete_meta( $post_id, '_kv2ps_cta_primary_action', in_array( $cta_action, array( 'click_to_chat', 'form' ), true ) ? $cta_action : '' );
 
-		foreach ( array( 'confidential', 'testimonial_consent', 'cta_override', 'cta_secondary_enabled' ) as $field ) {
+		foreach ( array( 'testimonial_consent', 'cta_override', 'cta_secondary_enabled' ) as $field ) {
 			if ( ! empty( $_POST[ 'kv2ps_' . $field ] ) ) {
 				update_post_meta( $post_id, '_kv2ps_' . $field, '1' );
 			} else {
 				delete_post_meta( $post_id, '_kv2ps_' . $field );
 			}
-		}
-
-		$location = array(
-			'city'        => isset( $_POST['kv2ps_location_city'] ) ? sanitize_text_field( wp_unslash( $_POST['kv2ps_location_city'] ) ) : '',
-			'department'  => isset( $_POST['kv2ps_location_department'] ) ? sanitize_text_field( wp_unslash( $_POST['kv2ps_location_department'] ) ) : '',
-			'postal_code' => isset( $_POST['kv2ps_location_postal_code'] ) ? sanitize_text_field( wp_unslash( $_POST['kv2ps_location_postal_code'] ) ) : '',
-		);
-		$location_result = KV2PS_Post_Types::set_location( $post_id, $location );
-		if ( is_wp_error( $location_result ) ) {
-			set_transient( 'kv2ps_location_error_' . get_current_user_id(), $location_result->get_error_message(), MINUTE_IN_SECONDS );
 		}
 
 		$date = isset( $_POST['kv2ps_project_date'] ) ? sanitize_text_field( wp_unslash( $_POST['kv2ps_project_date'] ) ) : '';
@@ -459,6 +442,77 @@ final class KV2PS_Admin {
 			$value = isset( $_POST[ 'kv2ps_' . $gallery . '_images' ] ) ? wp_unslash( $_POST[ 'kv2ps_' . $gallery . '_images' ] ) : '';
 			$ids   = KV2PS_Post_Types::sanitize_ids( $value );
 			self::update_or_delete_meta( $post_id, '_kv2ps_' . $gallery . '_images', $ids );
+		}
+	}
+
+	private static function save_location( $post_id ) {
+		$location_fields = array( 'kv2ps_location_department', 'kv2ps_location_postal_code' );
+		$has_location    = false;
+		foreach ( $location_fields as $field ) {
+			if ( array_key_exists( $field, $_POST ) ) {
+				$has_location = true;
+				break;
+			}
+		}
+		if ( ! $has_location ) {
+			return;
+		}
+
+		$location_nonce = isset( $_POST['kv2ps_location_nonce'] )
+			&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kv2ps_location_nonce'] ) ), 'kv2ps_save_location' );
+		$project_nonce  = isset( $_POST['kv2ps_nonce'] )
+			&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kv2ps_nonce'] ) ), 'kv2ps_save_realisation' );
+		if ( ! $location_nonce && ! $project_nonce ) {
+			return;
+		}
+
+		$location = array(
+			'department'  => isset( $_POST['kv2ps_location_department'] ) ? sanitize_text_field( wp_unslash( $_POST['kv2ps_location_department'] ) ) : '',
+			'postal_code' => isset( $_POST['kv2ps_location_postal_code'] ) ? sanitize_text_field( wp_unslash( $_POST['kv2ps_location_postal_code'] ) ) : '',
+		);
+		if ( ! empty( $_POST['kv2ps_confidential'] ) ) {
+			update_post_meta( $post_id, '_kv2ps_confidential', '1' );
+		} else {
+			delete_post_meta( $post_id, '_kv2ps_confidential' );
+		}
+		$result = KV2PS_Post_Types::set_location_details( $post_id, $location );
+		if ( is_wp_error( $result ) ) {
+			set_transient( 'kv2ps_location_error_' . get_current_user_id(), $result->get_error_message(), MINUTE_IN_SECONDS );
+			return;
+		}
+
+		clean_object_term_cache( $post_id, KV2PS_Post_Types::POST_TYPE );
+		clean_post_cache( $post_id );
+	}
+
+	public static function realisation_columns( $columns ) {
+		unset( $columns['taxonomy-kv2_ville'] );
+		$location_column = array( 'kv2ps_location' => __( 'Ville', 'kv2-portfolio-studio' ) );
+		if ( isset( $columns['title'] ) ) {
+			$position = array_search( 'title', array_keys( $columns ), true );
+			return array_slice( $columns, 0, $position + 1, true ) + $location_column + array_slice( $columns, $position + 1, null, true );
+		}
+		return $columns + $location_column;
+	}
+
+	public static function render_realisation_column( $column, $post_id ) {
+		if ( 'kv2ps_location' !== $column ) {
+			return;
+		}
+
+		$terms    = wp_get_post_terms( $post_id, 'kv2_ville' );
+		$location = KV2PS_Post_Types::get_location( $post_id );
+		if ( ! is_wp_error( $terms ) && $terms ) {
+			echo esc_html( implode( ', ', wp_list_pluck( $terms, 'name' ) ) );
+		} elseif ( $location['city'] ) {
+			echo esc_html( KV2PS_Post_Types::city_label( $location['city'], $location['department'] ) );
+			echo '<br><small class="description">' . esc_html__( 'À resynchroniser avec le filtre Ville', 'kv2-portfolio-studio' ) . '</small>';
+		} else {
+			echo '<span aria-hidden="true">—</span><span class="screen-reader-text">' . esc_html__( 'Aucune ville renseignée', 'kv2-portfolio-studio' ) . '</span>';
+		}
+
+		if ( $location['postal_code'] ) {
+			echo '<br><small>' . esc_html( $location['postal_code'] ) . '</small>';
 		}
 	}
 
@@ -507,6 +561,103 @@ final class KV2PS_Admin {
 				'checklistPending' => __( 'Modifications détectées : enregistrez la fiche pour recalculer la checklist.', 'kv2-portfolio-studio' ),
 				'checklistError'   => __( 'Impossible d’actualiser la checklist. Rechargez la page.', 'kv2-portfolio-studio' ),
 			)
+		);
+	}
+
+	public static function block_editor_assets() {
+		$screen = get_current_screen();
+		if ( ! $screen || KV2PS_Post_Types::POST_TYPE !== $screen->post_type ) {
+			return;
+		}
+
+		$taxonomy = get_taxonomy( 'kv2_ville' );
+		$terms     = get_terms(
+			array(
+				'taxonomy'   => 'kv2_ville',
+				'hide_empty' => false,
+				'orderby'    => 'name',
+				'order'      => 'ASC',
+				'number'     => 0,
+			)
+		);
+		$terms_error = is_wp_error( $terms );
+		$city_terms  = array();
+		foreach ( $terms_error ? array() : $terms as $term ) {
+			$name = isset( $term->name ) ? trim( sanitize_text_field( $term->name ) ) : '';
+			if ( $name && ! empty( $term->term_id ) ) {
+				$city_terms[] = array(
+					'id'   => (int) $term->term_id,
+					'name' => $name,
+				);
+			}
+		}
+
+		wp_enqueue_script(
+			'kv2ps-city-selector',
+			KV2PS_URL . 'assets/city-selector.js',
+			array( 'wp-components', 'wp-core-data', 'wp-data', 'wp-editor', 'wp-element', 'wp-hooks', 'wp-html-entities' ),
+			KV2PS_VERSION,
+			true
+		);
+		wp_localize_script(
+			'kv2ps-city-selector',
+			'kv2psCitySelector',
+			array(
+				'taxonomy'     => 'kv2_ville',
+				'terms'        => $city_terms,
+				'termsError'   => $terms_error ? __( 'Impossible de préparer la liste des villes. Rechargez l’éditeur.', 'kv2-portfolio-studio' ) : '',
+				'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+				'nonce'        => wp_create_nonce( 'kv2ps_city_selector' ),
+				'canCreate'    => $taxonomy && current_user_can( $taxonomy->cap->manage_terms ),
+				'label'        => __( 'Ajouter ou rechercher une ville', 'kv2-portfolio-studio' ),
+				'placeholder'  => __( 'Commencez à saisir le nom d’une ville…', 'kv2-portfolio-studio' ),
+				'help'         => __( 'Sélectionnez une ou plusieurs villes existantes, ou saisissez un nouveau nom puis appuyez sur Entrée.', 'kv2-portfolio-studio' ),
+				'saving'       => __( 'Création de la nouvelle ville…', 'kv2-portfolio-studio' ),
+				'saveError'    => __( 'Impossible de créer cette ville.', 'kv2-portfolio-studio' ),
+				'createDenied' => __( 'Vous pouvez sélectionner une ville existante, mais votre compte ne peut pas en créer une nouvelle.', 'kv2-portfolio-studio' ),
+				'added'        => __( 'Ville ajoutée.', 'kv2-portfolio-studio' ),
+				'removed'      => __( 'Ville retirée.', 'kv2-portfolio-studio' ),
+				'remove'       => __( 'Retirer la ville', 'kv2-portfolio-studio' ),
+				'invalid'      => __( 'Nom de ville invalide.', 'kv2-portfolio-studio' ),
+			)
+		);
+	}
+
+	public static function ajax_create_city() {
+		check_ajax_referer( 'kv2ps_city_selector', 'nonce' );
+
+		$taxonomy = get_taxonomy( 'kv2_ville' );
+		if ( ! $taxonomy || ! current_user_can( $taxonomy->cap->manage_terms ) ) {
+			wp_send_json_error( array( 'message' => __( 'Vous n’avez pas l’autorisation de créer une ville.', 'kv2-portfolio-studio' ) ), 403 );
+		}
+
+		$city = self::create_city( isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : '' );
+		if ( is_wp_error( $city ) ) {
+			wp_send_json_error( array( 'message' => $city->get_error_message() ), 400 );
+		}
+
+		wp_send_json_success( array( 'term' => $city ) );
+	}
+
+	public static function create_city( $raw_name ) {
+		$name = trim( sanitize_text_field( $raw_name ) );
+		if ( ! $name ) {
+			return new WP_Error( 'kv2ps_empty_city', __( 'Le nom de la ville est vide.', 'kv2-portfolio-studio' ) );
+		}
+
+		$term_id = KV2PS_Post_Types::ensure_term( $name, 'kv2_ville', KV2PS_Post_Types::city_slug( $name ) );
+		if ( is_wp_error( $term_id ) ) {
+			return $term_id;
+		}
+
+		$term = get_term( $term_id, 'kv2_ville' );
+		if ( ! $term || is_wp_error( $term ) ) {
+			return new WP_Error( 'kv2ps_city_read_failed', __( 'La ville a été créée mais ne peut pas être relue.', 'kv2-portfolio-studio' ) );
+		}
+
+		return array(
+			'id'   => (int) $term->term_id,
+			'name' => sanitize_text_field( $term->name ),
 		);
 	}
 

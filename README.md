@@ -1,4 +1,4 @@
-# KV2 Portfolio Studio 1.1.18
+# KV2 Portfolio Studio 1.1.25
 
 Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio sans sacrifier le référencement ni les données existantes.
 
@@ -6,7 +6,7 @@ Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio 
 
 - crée de vraies URL indexables pour chaque réalisation et une archive paginée côté serveur ;
 - organise les projets par service, ville, type de meuble, style et technique ;
-- centralise la localisation dans trois champs simples — ville, département et code postal — puis crée ou réutilise automatiquement le bon terme de ville ;
+- accepte plusieurs villes ou zones par réalisation et conserve séparément le département et le code postal ;
 - ajoute une trame éditoriale complète : besoin, état initial, contraintes, intervention, résultat, matières, durée, prix facultatif et témoignage sourcé ;
 - gère les photos avant/après en colonnes ou dans un comparateur accessible ;
 - propose des CTA globaux ou propres à une réalisation, avec déclenchement Click to Chat et lien vers le formulaire ;
@@ -27,16 +27,16 @@ Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio 
 ## Installation
 
 1. Dans WordPress, ouvrir **Extensions → Ajouter une extension → Téléverser une extension**.
-2. Choisir `kv2-portfolio-studio-v1.1.18.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
+2. Choisir `kv2-portfolio-studio-v1.1.25.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
 3. Ouvrir **Réalisations → Réglages** et configurer l’affichage, Click to Chat, l’URL du formulaire et les droits des images.
 4. Dans Rank Math, vérifier que les études de cas indexables sont incluses au sitemap. Les éléments « Galerie uniquement » sont automatiquement exclus des sitemaps WordPress et Rank Math.
 5. Publier un projet test, puis contrôler l’affichage, le canonical et le JSON-LD avec Rich Snippet Sniper.
 
-## Ajouter une ville sans doublon
+## Associer plusieurs villes ou zones
 
-Dans l’éditeur d’une réalisation, utiliser le bloc **Localisation de la réalisation** : saisir ou choisir la ville, puis ajouter si possible le département et le code postal dans les champs séparés. Le département et le code postal restent facultatifs.
+Dans l’éditeur d’une réalisation, utiliser le bloc WordPress **Villes** pour sélectionner ou créer une ou plusieurs zones. Une restauration réalisée à Paris 16 peut ainsi recevoir simultanément les termes **Paris** et **Paris 16** : elle apparaîtra dans les deux portfolios filtrés.
 
-À l’enregistrement, le plugin associe une seule ville à la fiche. Il réutilise le terme existant, complète son département lorsqu’il manque et distingue les homonymes tels que Saint-Denis (93) et Saint-Denis (974). Le même circuit est utilisé par l’import JSON. Une erreur de création ou d’association est affichée dans l’administration au lieu d’être ignorée.
+Le bloc complémentaire **Département et code postal** ne contient plus de second champ ville. Ces informations restent facultatives et n’écrasent jamais les villes sélectionnées. L’import JSON accepte également plusieurs termes dans `taxonomies.villes` et conserve la localisation principale dans `location`.
 
 La recherche publique couvre le titre, le contenu, les services, les villes, les autres taxonomies, le département et le code postal. La ville et les métadonnées de localisation d’un projet confidentiel ne sont pas injectées dans les données publiques de la carte ou de la visionneuse.
 
@@ -81,13 +81,15 @@ La V1.1.17 calcule les colonnes du portfolio d’après la largeur réelle de la
 
 La V1.1.18 neutralise le padding de carte très important ajouté par Astra sur les conteneurs séparés. Les images occupent ainsi toute la largeur de leur colonne au lieu d’être comprimées au centre de chaque carte.
 
-### Incident 502 du 28 août 2026
+La V1.1.19 rend la sauvegarde de la localisation indépendante du bloc éditorial principal. Le sommaire des réalisations possède désormais sa propre colonne « Ville », affiche aussi le code postal disponible et signale les anciennes données qui doivent être resynchronisées avec la taxonomie utilisée par les shortcodes.
 
-Sur `tapissier-laurot.fr`, l’archive `/realisation-tapisserie/` et la route REST d’édition de la page 513 renvoyaient ponctuellement un `502 Bad Gateway`. Le journal Nginx indiquait `upstream sent too big header while reading response header from upstream`.
+La V1.1.20 remplace le champ ville individuel par le bloc WordPress « Villes » multivalué. Une fiche peut être classée dans plusieurs niveaux géographiques, par exemple Paris et Paris 16, tandis que le département et le code postal restent des compléments séparés.
 
-La cause était une valeur `false` présente dans le tableau renvoyé pour la taxonomie `kv2_service`. Le rendu d’une carte tentait ensuite de lire `term_id` et `name` sur cette valeur. Les avertissements PHP répétés pour chaque carte gonflaient les en-têtes FastCGI jusqu’au rejet par Nginx.
+La V1.1.25 conserve le sélecteur multiville de la 1.1.24, mais injecte directement les villes existantes au chargement de l’éditeur. Elle ne dépend donc plus de la route REST des termes qui échouait sur Tapissier Laurot. La création d’une nouvelle ville utilise une action d’administration authentifiée et protégée par nonce. L’autocomplétion, les villes déjà affectées et la sélection multiple sont conservées sans migration ni perte de données.
 
-Le rendu filtre désormais toute entrée qui n’est pas un objet de terme exploitable avant de construire les libellés et les slugs. Après déploiement du correctif, l’archive et la route REST ont toutes deux été vérifiées en HTTP 200. Le contrat d’expérience éditoriale protège ce garde-fou contre une régression.
+La V1.1.24 repart de la 1.1.22 stable et remplace uniquement le champ WordPress « Villes » par un sélecteur sécurisé. Les réponses incomplètes sont filtrées avant d’atteindre le composant WordPress, ce qui empêche l’erreur `undefined.normalize`. Les villes restent une taxonomie normale : la présentation à cases à cocher introduite par la 1.1.23 est retirée.
+
+La V1.1.22 remplace la 1.1.21 et corrige sans migration anticipée le bouton de retour des fiches. Si l’ancien réglage `/realisation-tapisserie/` est encore utilisé et qu’une page publiée `/realisations-tapissier/` existe, cette dernière est choisie uniquement pendant l’affichage de la fiche. Cette résolution tardive évite toute erreur pendant l’initialisation de WordPress et laisse intactes les URL personnalisées.
 
 ## CTA intelligent et Click to Chat
 
