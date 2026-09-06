@@ -64,6 +64,9 @@ final class KV2PS_Project_Package {
 	}
 
 	public static function prompt() {
+		if ( KV2PS_Plugin::PROFILE_ROOFING === KV2PS_Plugin::business_profile() ) {
+			return "Analyse les photos et les notes du client pour préparer une réalisation de couverture pour ETS Mon Toit. Complète uniquement le JSON fourni, sans modifier schema_version ni les valeurs match. N’invente jamais une identité, un avis, une autorisation, un lieu, une surface, un prix, une date, une pente, un matériau, une marque, une conformité ou un droit. Laisse vide ce qui n’est pas certain.\n\nRédige en français naturel : titre, extrait, besoin, état initial, contraintes de toiture, intervention, résultat, matériaux et fournitures, durée et type d’intervention. Renseigne project.location avec la ville, le code postal et le département dans des champs séparés. Dans taxonomies.villes, utilise un seul terme au format « Ville (département) » et un slug sans code postal. Classe le chantier dans taxonomies.services, taxonomies.elements_toiture, taxonomies.materiaux et taxonomies.techniques. Propose un titre SEO, une meta description et le mot-clé principal. Pour chaque image, indique son rôle featured, before ou after, son ordre et complète title, alt, caption, description, credit, copyright, keywords, location, date_created et licence. L’ALT doit décrire uniquement ce qui est visuellement utile, sans inventer ce qui ne se voit pas et sans bourrage de mots-clés.\n\nPrépare aussi le CTA, mais conserve use_global=true sauf besoin particulier. Ne mets un témoignage que si son texte a été réellement fourni et ne mets consent=true que si l’autorisation est explicitement indiquée. Retourne uniquement un JSON valide conforme à chatgpt-realisation.schema.json.";
+		}
 		return "Analyse les photos et les notes du client pour préparer une réalisation de portfolio. Complète uniquement le JSON fourni, sans modifier schema_version ni les valeurs match. N’invente jamais une identité, un avis, une autorisation, un lieu, un prix, une date, un matériau ou un droit. Laisse vide ce qui n’est pas certain.\n\nRédige en français naturel : titre, extrait, besoin, état initial, contraintes, intervention, résultat, matières, durée et type de transformation. Renseigne project.location avec la ville, le code postal et le département dans des champs séparés. Dans taxonomies.villes, utilise un seul terme au format « Ville (département) » et un slug sans code postal. Propose les autres taxonomies utiles, un titre SEO, une meta description et le mot-clé principal. Pour chaque image, indique son rôle featured, before ou after, son ordre et complète title, alt, caption, description, credit, copyright, keywords, location, date_created et licence. L’ALT doit décrire l’information visuelle utile sans bourrage de mots-clés.\n\nPrépare aussi le CTA, mais conserve use_global=true sauf besoin particulier. Ne mets un témoignage que si son texte a été réellement fourni et ne mets consent=true que si l’autorisation est explicitement indiquée. Retourne uniquement un JSON valide conforme à chatgpt-realisation.schema.json.";
 	}
 
@@ -196,7 +199,8 @@ final class KV2PS_Project_Package {
 		$location = isset( $project['location'] ) && is_array( $project['location'] ) ? $project['location'] : array();
 		self::apply_testimonial( $post_id, isset( $project['testimonial'] ) ? $project['testimonial'] : array(), $dry_run, $report );
 		self::apply_cta( $post_id, isset( $project['cta'] ) ? $project['cta'] : array(), $dry_run, $report );
-		self::apply_taxonomies( $post_id, isset( $project['taxonomies'] ) ? $project['taxonomies'] : array(), $dry_run, $report );
+		$skip_city_taxonomy = KV2PS_Plugin::PROFILE_ROOFING === KV2PS_Plugin::business_profile() && ! empty( $location['city'] );
+		self::apply_taxonomies( $post_id, isset( $project['taxonomies'] ) ? $project['taxonomies'] : array(), $dry_run, $report, $skip_city_taxonomy );
 		self::apply_location( $post_id, $location, $dry_run, $report );
 		self::apply_seo( $post_id, isset( $project['seo'] ) ? $project['seo'] : array(), $dry_run );
 		self::apply_images( $post_id, isset( $project['images'] ) ? $project['images'] : array(), $dry_run, $report );
@@ -310,23 +314,27 @@ final class KV2PS_Project_Package {
 		}
 	}
 
-	private static function apply_taxonomies( $post_id, $taxonomies, $dry_run, &$report ) {
+	private static function apply_taxonomies( $post_id, $taxonomies, $dry_run, &$report, $skip_city = false ) {
 		if ( ! is_array( $taxonomies ) ) {
 			return;
 		}
-		$map = array(
-			'services'   => 'kv2_service',
-			'villes'     => 'kv2_ville',
-			'meubles'    => 'kv2_meuble',
-			'styles'     => 'kv2_style',
-			'techniques' => 'kv2_technique',
-		);
+		$map     = KV2PS_Post_Types::package_taxonomy_map();
+		$aliases = KV2PS_Post_Types::package_taxonomy_aliases();
 		foreach ( $map as $key => $taxonomy ) {
-			if ( empty( $taxonomies[ $key ] ) || ! is_array( $taxonomies[ $key ] ) ) {
+			$values = isset( $taxonomies[ $key ] ) ? $taxonomies[ $key ] : array();
+			if ( empty( $values ) && ! empty( $aliases[ $key ] ) ) {
+				foreach ( $aliases[ $key ] as $alias ) {
+					if ( ! empty( $taxonomies[ $alias ] ) ) {
+						$values = $taxonomies[ $alias ];
+						break;
+					}
+				}
+			}
+			if ( ( $skip_city && 'kv2_ville' === $taxonomy ) || empty( $values ) || ! is_array( $values ) ) {
 				continue;
 			}
 			$term_ids = array();
-			foreach ( array_slice( $taxonomies[ $key ], 0, 20 ) as $term_data ) {
+			foreach ( array_slice( $values, 0, 20 ) as $term_data ) {
 				$name = is_array( $term_data ) ? ( isset( $term_data['name'] ) ? sanitize_text_field( $term_data['name'] ) : '' ) : sanitize_text_field( $term_data );
 				$slug = is_array( $term_data ) && ! empty( $term_data['slug'] ) ? sanitize_title( $term_data['slug'] ) : sanitize_title( $name );
 				if ( ! $name ) {
@@ -486,7 +494,7 @@ final class KV2PS_Project_Package {
 
 		return array(
 			'schema_version' => '1.1',
-			'source' => array( 'generator' => 'KV2 Portfolio Studio', 'generated_at' => gmdate( 'c' ), 'site' => home_url( '/' ), 'status_policy' => 'draft_only', 'client_notes' => sanitize_textarea_field( $client_notes ) ),
+			'source' => array( 'generator' => 'KV2 Portfolio Studio', 'generated_at' => gmdate( 'c' ), 'site' => home_url( '/' ), 'business_profile' => KV2PS_Plugin::business_profile( $settings ), 'status_policy' => 'draft_only', 'client_notes' => sanitize_textarea_field( $client_notes ) ),
 			'project' => array(
 				'match'       => array( 'realisation_id' => $post ? (int) $post_id : null ),
 				'fields'      => $fields,
@@ -517,7 +525,7 @@ final class KV2PS_Project_Package {
 	}
 
 	private static function export_taxonomies( $post_id ) {
-		$map = array( 'services' => 'kv2_service', 'villes' => 'kv2_ville', 'meubles' => 'kv2_meuble', 'styles' => 'kv2_style', 'techniques' => 'kv2_technique' );
+		$map = KV2PS_Post_Types::package_taxonomy_map();
 		$output = array();
 		foreach ( $map as $key => $taxonomy ) {
 			$terms = $post_id ? wp_get_post_terms( $post_id, $taxonomy ) : array();

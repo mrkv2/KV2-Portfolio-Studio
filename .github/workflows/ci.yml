@@ -41,3 +41,5 @@ jobs:
         run: node --check assets/city-selector.js && node tests/city-selector-node-test.js
       - name: Upgrade timing contract
         run: php tests/upgrade-timing-contract.php
+      - name: Internal linking contract
+        run: php tests/internal-linking-contract.php

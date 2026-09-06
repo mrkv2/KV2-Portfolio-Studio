@@ -3,10 +3,10 @@ Contributors: kv2
 Tags: portfolio, seo, image metadata, exif, rank math
 Requires at least: 6.5
 Requires PHP: 7.4
-Stable tag: 1.1.26
+Stable tag: 1.2.1
 License: Proprietary
 
-Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonnées d’images avec ChatGPT.
+Portfolio de réalisations SEO-first, profils métiers, import Astra Portfolio et flux de métadonnées d’images avec ChatGPT.
 
 == Installation ==
 
@@ -20,6 +20,23 @@ Portfolio de réalisations SEO-first, import WP Portfolio et flux de métadonné
 Le plugin ne supprime aucune donnée à la désinstallation. Le module EXIF lit le fichier original mais ne le réécrit pas dans la version 1.1.
 
 == Changelog ==
+
+= 1.2.1 =
+* Réunit les profils Tapisserie d’ameublement et Couverture et zinguerie dans une base commune.
+* Conserve le sélecteur multiville et les correctifs d’activation des versions 1.1.25 et 1.1.26.
+* Préserve les villes multiples pour la tapisserie et la localisation canonique unique pour la couverture.
+* Relie automatiquement les services de tapisserie à leurs pages commerciales publiées.
+* Synchronise les villes de tapisserie avec les URL canoniques du registre technique sans écraser les choix manuels.
+* Supprime les liens de taxonomie vides et conserve trois réalisations similaires par service.
+
+= 1.2.0 =
+* Ajoute le profil Couverture et zinguerie configuré pour ETS Mon Toit.
+* Protège la page /realisations-couvreur/ et utilise /chantier/ pour les nouvelles études de cas.
+* Ajoute les libellés Types de travaux, Éléments de toiture et Matériaux sans casser les taxonomies historiques.
+* Adapte l’import Astra Portfolio aux services, communes, éléments et matériaux de couverture.
+* Convertit les termes Ville (code postal) en localisation canonique avec département et code postal séparés.
+* Ajoute les alias de shortcode element_toiture et materiau.
+* Spécialise l’assistant ChatGPT et ajoute l’exemple du chantier zinc à Chaville.
 
 = 1.1.26 =
 * Décale la mise à niveau interne jusqu’à l’initialisation complète de WordPress.

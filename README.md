@@ -1,12 +1,26 @@
-# KV2 Portfolio Studio 1.1.26
+# KV2 Portfolio Studio 1.2.1
 
-Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio sans sacrifier le référencement ni les données existantes.
+Un portfolio WordPress natif pensé pour remplacer progressivement Astra Portfolio sans sacrifier le référencement ni les données existantes.
 
-## Ce que fait la V1.1
+La V1.2.1 réunit les deux lignées du plugin et automatise, pour le profil tapisserie, les liens des réalisations vers les pages commerciales de service, les véritables pages de ville et trois réalisations du même service. Les URL définies manuellement sur un terme restent prioritaires.
+
+## Profil ETS Mon Toit
+
+La V1.2 ajoute un profil métier **Couverture et zinguerie**, détecté automatiquement sur `ets-mon-toit.fr`. Il configure :
+
+- la page principale `/realisations-couvreur/` et les futures études de cas sous `/chantier/` sans entrer en conflit avec les anciennes URL `/realisations/` ;
+- les couleurs et CTA d’ETS Mon Toit : accent `#DCA54A`, téléphone `01 84 19 07 62`, WhatsApp `+33698549645` et formulaire `/#devis` ;
+- les taxonomies **Types de travaux**, **Villes**, **Éléments de toiture**, **Matériaux** et **Techniques**, tout en conservant les clés internes historiques pour qu’une mise à jour ne détache aucune donnée ;
+- le classement des catégories Astra Portfolio, avec conversion automatique des libellés `Ville (code postal)` en ville, département et code postal propres ;
+- un assistant ChatGPT spécialisé couverture qui refuse d’inventer une pente, une surface, un matériau, une marque ou une conformité ;
+- un exemple complet prêt pour le chantier zinc de Chaville dans `examples/ets-mon-toit-chaville-zinc.example.json`.
+
+## Ce que fait le plugin
 
 - crée de vraies URL indexables pour chaque réalisation et une archive paginée côté serveur ;
-- organise les projets par service, ville, type de meuble, style et technique ;
-- accepte plusieurs villes ou zones par réalisation et conserve séparément le département et le code postal ;
+- organise les projets selon le profil métier : service, ville, élément, matériau/style et technique ;
+- accepte plusieurs villes ou zones pour la tapisserie et conserve séparément le département et le code postal ;
+- centralise la localisation des chantiers de couverture puis crée ou réutilise automatiquement le bon terme de ville ;
 - ajoute une trame éditoriale complète : besoin, état initial, contraintes, intervention, résultat, matières, durée, prix facultatif et témoignage sourcé ;
 - gère les photos avant/après en colonnes ou dans un comparateur accessible ;
 - propose des CTA globaux ou propres à une réalisation, avec déclenchement Click to Chat et lien vers le formulaire ;
@@ -17,7 +31,7 @@ Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio 
 - détecte une page `/realisations/` déjà publiée et active alors un routage non conflictuel : cette page et ses pages enfants restent intactes, sans archive ni taxonomie KV2 publique concurrente ;
 - laisse Rank Math gérer les valeurs déjà saisies, fournit seulement un titre et une meta description de secours, donne à chaque page paginée son propre canonical et place les recherches/filtres temporaires en `noindex, follow` ;
 - complète tardivement le graphe Rank Math avec `CreativeWork` seulement si cette entité n’existe pas déjà, puis enrichit les `ImageObject` existants avec créateur, crédit, copyright et licence ;
-- importe WP Portfolio vers des brouillons ou vers une galerie de transition `noindex`, sans modifier ni supprimer les sources, après nettoyage du HTML importé ;
+- importe Astra Portfolio vers des brouillons ou vers une galerie de transition `noindex`, sans modifier ni supprimer les sources, après nettoyage du HTML importé ;
 - traduit les anciens attributs `categories`, `tags`, `other-categories`, `per-page`, filtres, recherche et pagination ; l’alias `[wp_portfolio]` reste désactivé tant que la bascule n’a pas été validée ;
 - inspecte les EXIF présents dans les JPEG/TIFF ;
 - affiche une checklist de complétude avant publication et prépare les redirections des anciennes URL WP Portfolio ;
@@ -27,8 +41,8 @@ Un portfolio WordPress natif pensé pour remplacer progressivement WP Portfolio 
 ## Installation
 
 1. Dans WordPress, ouvrir **Extensions → Ajouter une extension → Téléverser une extension**.
-2. Choisir `kv2-portfolio-studio-v1.1.26.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
-3. Ouvrir **Réalisations → Réglages** et configurer l’affichage, Click to Chat, l’URL du formulaire et les droits des images.
+2. Choisir `kv2-portfolio-studio-v1.2.1.zip`, installer et activer. Une mise à jour depuis la V1 conserve les réalisations et réglages.
+3. Ouvrir **Réalisations → Réglages**, vérifier le profil métier, puis contrôler l’affichage, Click to Chat, l’URL du formulaire et les droits des images.
 4. Dans Rank Math, vérifier que les études de cas indexables sont incluses au sitemap. Les éléments « Galerie uniquement » sont automatiquement exclus des sitemaps WordPress et Rank Math.
 5. Publier un projet test, puis contrôler l’affichage, le canonical et le JSON-LD avec Rich Snippet Sniper.
 
@@ -40,26 +54,32 @@ Le bloc complémentaire **Département et code postal** ne contient plus de seco
 
 La recherche publique couvre le titre, le contenu, les services, les villes, les autres taxonomies, le département et le code postal. La ville et les métadonnées de localisation d’un projet confidentiel ne sont pas injectées dans les données publiques de la carte ou de la visionneuse.
 
-Sur un nouveau site sans page portfolio détectée, la page configurée par défaut est `/realisation-tapisserie/`. Si une page publiée `/realisations/` existe déjà, elle devient la page principale et le plugin active automatiquement le mode « Site existant ». Le shortcode `[kv2_portfolio]` produit directement les cartes et leurs liens dans le HTML initial : son utilisation ne pénalise donc pas le SEO. Il ajoute automatiquement le H1 configuré lorsque la page ou Elementor n’en fournit pas. Utilisez `show_heading="0"` pour le désactiver, ou `heading="…"` et `intro="…"` pour le personnaliser.
+Sur ETS Mon Toit, la page principale détectée est `/realisations-couvreur/` et les nouvelles études de cas utilisent `/chantier/nom-du-projet/`. Sur le profil tapisserie historique, les valeurs correspondantes restent `/realisation-tapisserie/` et `/realisation/nom-du-projet/`. Le shortcode `[kv2_portfolio]` produit directement les cartes et leurs liens dans le HTML initial : son utilisation ne pénalise donc pas le SEO. Il ajoute automatiquement le H1 configuré lorsque la page ou Elementor n’en fournit pas. Utilisez `show_heading="0"` pour le désactiver, ou `heading="…"` et `intro="…"` pour le personnaliser.
 
-En mode standard, l’archive technique `/realisations/` peut être redirigée en 301 vers la page principale et les fiches conservent leurs URL `/realisations/nom-du-projet/`. En mode « Site existant », aucune archive KV2 ne prend ce chemin et les futures études de cas utilisent `/realisation/nom-du-projet/`. Utilisez `[kv2_portfolio preset="settings"]` uniquement pour reprendre les choix de l’écran Réglages. Filtres et affichages peuvent être combinés :
+En mode standard, l’archive technique `/realisations/` peut être redirigée en 301 vers la page principale et les fiches conservent leurs URL `/realisations/nom-du-projet/`. En mode « Site existant », aucune archive KV2 ne prend ce chemin et les futures études de cas utilisent le préfixe configuré (`/chantier/` pour ETS Mon Toit). Utilisez `[kv2_portfolio preset="settings"]` uniquement pour reprendre les choix de l’écran Réglages. Filtres et affichages peuvent être combinés :
 
 `[kv2_portfolio meuble="chaise" style="louis-xvi" technique="cannage" ville="paris" layout="masonry" columns="2" image_ratio="auto" card_style="minimal" load_mode="button"]`
 
 Les attributs natifs de taxonomie sont `service`, `ville`, `meuble`, `style` et `technique`. Ils utilisent les slugs visibles dans les écrans correspondants du menu **Réalisations** et peuvent être combinés. Plusieurs slugs d'une même taxonomie peuvent être séparés par une virgule ou une barre verticale.
 
+Avec le profil couverture, les alias lisibles `element_toiture` et `materiau` remplacent avantageusement les anciennes clés internes `meuble` et `style` :
+
+`[kv2_portfolio service="renovation-toiture" element_toiture="fenetre-toit-velux" materiau="zinc-vmzinc" ville="chaville"]`
+
 Valeurs de `layout` : `grid`, `tiles`, `masonry`. Valeurs de `load_mode` : `paged`, `button`, `infinite`.
 
 Le préréglage initial et les installations encore restées sur les anciens réglages par défaut utilisent `masonry`, 3 colonnes, ratio `auto`, cartes `classic`, 12 réalisations et navigation `button`. Les attributs `show_filters="0"`, `show_search="0"` ou `show_cta="0"` permettent de masquer séparément ces éléments. Les réglages déjà personnalisés sont conservés lors de la mise à jour.
 
-## Migration depuis WP Portfolio
+## Migration depuis Astra Portfolio
 
-Ouvrir **Réalisations → Importer WP Portfolio**, sélectionner quelques éléments et commencer par un test. Deux modes sont proposés :
+Ouvrir **Réalisations → Importer Astra Portfolio**, sélectionner quelques éléments et commencer par un test. Deux modes sont proposés :
 
 - **Brouillon** pour préparer une véritable étude de cas indexable ;
 - **Galerie noindex** pour reproduire les cartes publiées sans créer de pages SEO pauvres. Ces éléments restent hors sitemap et ouvrent une visionneuse accessible, ou une page éditoriale interne lorsqu’elle est raccordée dans la fiche.
 
-Le lien avec l’ID source est conservé pour empêcher les doublons et les taxonomies WP Portfolio sont mappées vers les taxonomies KV2. Le plugin reprend l’image mise en avant ou, à défaut, la première pièce jointe image reconnue dans les métadonnées de la source. Une étude de cas peut être promue manuellement depuis sa fiche. Si les contrôles de recette sont concluants et WP Portfolio est désactivé, l’alias de compatibilité peut alors être activé dans **Réglages** pour interpréter les 82 anciens shortcodes sans modifier les pages. Il ne remplace jamais un shortcode encore enregistré par WP Portfolio.
+Le lien avec l’ID source est conservé pour empêcher les doublons et les taxonomies Astra Portfolio sont mappées vers les taxonomies KV2. Le plugin reprend l’image mise en avant ou, à défaut, les pièces jointes reconnues dans les métadonnées de la source. Une étude de cas peut être promue manuellement depuis sa fiche. Si les contrôles de recette sont concluants et Astra Portfolio est désactivé, l’alias de compatibilité peut alors être activé dans **Réglages**. Il ne remplace jamais un shortcode encore enregistré par le plugin source.
+
+Sur ETS Mon Toit, commencer par importer les 51 sources publiées en **Galerie noindex**. Elles restent visibles sans créer 51 pages SEO pauvres. Les nouveaux chantiers complets — comme la couverture zinc de Chaville — sont créés séparément en **Étude de cas indexable**.
 
 La V1.1.9 affiche le nombre réel de sources sans contenu et leur nombre d’images avant la migration. Après une première migration mal configurée, le bouton **Réparer et resynchroniser l’import existant** remet les imports vides en galerie `noindex`, resynchronise images et catégories, et conserve intégralement toute fiche qui contient déjà un vrai texte éditorial. Les filtres rechargent une sélection côté serveur : ils couvrent ainsi les centaines de réalisations, et « Voir plus » continue dans cette sélection au lieu de filtrer uniquement la première série visible.
 
@@ -92,7 +112,6 @@ La V1.1.25 conserve le sélecteur multiville de la 1.1.24, mais injecte directem
 La V1.1.24 repart de la 1.1.22 stable et remplace uniquement le champ WordPress « Villes » par un sélecteur sécurisé. Les réponses incomplètes sont filtrées avant d’atteindre le composant WordPress, ce qui empêche l’erreur `undefined.normalize`. Les villes restent une taxonomie normale : la présentation à cases à cocher introduite par la 1.1.23 est retirée.
 
 La V1.1.22 remplace la 1.1.21 et corrige sans migration anticipée le bouton de retour des fiches. Si l’ancien réglage `/realisation-tapisserie/` est encore utilisé et qu’une page publiée `/realisations-tapissier/` existe, cette dernière est choisie uniquement pendant l’affichage de la fiche. Cette résolution tardive évite toute erreur pendant l’initialisation de WordPress et laisse intactes les URL personnalisées.
-
 ## CTA intelligent et Click to Chat
 
 Dans **Réalisations → Réglages**, choisir :
@@ -119,6 +138,8 @@ Une réalisation peut remplacer ces réglages dans son bloc « CTA de cette ré
 8. Ouvrir la fiche, suivre la checklist et publier manuellement.
 
 Une fiche déjà publiée ne peut pas être modifiée par ce flux : cette protection évite qu’un import IA ne change directement une page en ligne. Le contrat se trouve dans `schema/chatgpt-realisation.schema.json` et l’exemple dans `examples/chatgpt-realisation.example.json`.
+
+Pour le premier chantier ETS Mon Toit, utiliser `examples/ets-mon-toit-chaville-zinc.example.json` après avoir téléversé les deux photos dans la médiathèque. Le rapprochement se fait par nom de fichier lorsque l’ID WordPress n’est pas encore connu.
 
 ## Workflow image avec ChatGPT
 

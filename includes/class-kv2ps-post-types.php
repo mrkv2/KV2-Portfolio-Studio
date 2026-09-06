@@ -9,6 +9,57 @@ final class KV2PS_Post_Types {
 		return array( 'kv2_service', 'kv2_ville', 'kv2_meuble', 'kv2_style', 'kv2_technique' );
 	}
 
+	public static function taxonomy_config( $profile = '' ) {
+		$profile = $profile ?: KV2PS_Plugin::business_profile();
+		if ( KV2PS_Plugin::PROFILE_ROOFING === $profile ) {
+			return array(
+				'kv2_service'   => array( 'Types de travaux', 'Type de travaux', true, 'type-travaux-realisation' ),
+				'kv2_ville'     => array( 'Villes', 'Ville', false, 'ville-realisation' ),
+				'kv2_meuble'    => array( 'Éléments de toiture', 'Élément de toiture', true, 'element-toiture-realisation' ),
+				'kv2_style'     => array( 'Matériaux', 'Matériau', false, 'materiau-realisation' ),
+				'kv2_technique' => array( 'Techniques', 'Technique', false, 'technique-realisation' ),
+			);
+		}
+
+		return array(
+			'kv2_service'   => array( 'Services', 'Service', true, 'service-realisation' ),
+			'kv2_ville'     => array( 'Villes', 'Ville', false, 'ville-realisation' ),
+			'kv2_meuble'    => array( 'Types de meuble', 'Type de meuble', true, 'meuble-realisation' ),
+			'kv2_style'     => array( 'Styles', 'Style', false, 'style-realisation' ),
+			'kv2_technique' => array( 'Techniques', 'Technique', false, 'technique-realisation' ),
+		);
+	}
+
+	public static function package_taxonomy_map( $profile = '' ) {
+		$profile = $profile ?: KV2PS_Plugin::business_profile();
+		if ( KV2PS_Plugin::PROFILE_ROOFING === $profile ) {
+			return array(
+				'services'         => 'kv2_service',
+				'villes'           => 'kv2_ville',
+				'elements_toiture' => 'kv2_meuble',
+				'materiaux'        => 'kv2_style',
+				'techniques'       => 'kv2_technique',
+			);
+		}
+
+		return array(
+			'services'   => 'kv2_service',
+			'villes'     => 'kv2_ville',
+			'meubles'    => 'kv2_meuble',
+			'styles'     => 'kv2_style',
+			'techniques' => 'kv2_technique',
+		);
+	}
+
+	public static function package_taxonomy_aliases() {
+		return array(
+			'elements_toiture' => array( 'meubles' ),
+			'materiaux'        => array( 'styles' ),
+			'meubles'          => array( 'elements_toiture' ),
+			'styles'           => array( 'materiaux' ),
+		);
+	}
+
 	public static function register() {
 		$settings      = KV2PS_Plugin::settings();
 		$existing_page = 'existing_page' === ( isset( $settings['routing_mode'] ) ? $settings['routing_mode'] : 'standard' );
@@ -48,13 +99,7 @@ final class KV2PS_Post_Types {
 			),
 		);
 
-		$taxonomies = array(
-			'kv2_service'   => array( 'Services', 'Service', true, 'service-realisation' ),
-			'kv2_ville'     => array( 'Villes', 'Ville', false, 'ville-realisation' ),
-			'kv2_meuble'    => array( 'Types de meuble', 'Type de meuble', true, 'meuble-realisation' ),
-			'kv2_style'     => array( 'Styles', 'Style', false, 'style-realisation' ),
-			'kv2_technique' => array( 'Techniques', 'Technique', false, 'technique-realisation' ),
-		);
+		$taxonomies = self::taxonomy_config();
 
 		foreach ( $taxonomies as $taxonomy => $config ) {
 			$args = array(

@@ -57,4 +57,14 @@ if ( $expected ) {
 	throw new RuntimeException( 'One or more shortcode taxonomy filters were not created.' );
 }
 
+$roofing_query = KV2PS_Compatibility::shortcode_tax_query(
+	array(
+		'element_toiture' => 'fenetre-toit-velux',
+		'materiau'        => 'zinc-vmzinc',
+	)
+);
+if ( 2 !== count( $roofing_query ) || 'kv2_meuble' !== $roofing_query[0]['taxonomy'] || 'kv2_style' !== $roofing_query[1]['taxonomy'] ) {
+	throw new RuntimeException( 'Roofing shortcode aliases were not mapped to the compatible internal taxonomies.' );
+}
+
 echo "Shortcode filter contract checks passed.\n";

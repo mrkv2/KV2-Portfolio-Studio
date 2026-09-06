@@ -133,11 +133,13 @@ final class KV2PS_Compatibility {
 		$atts  = is_array( $atts ) ? $atts : array();
 		$query = is_array( $query ) ? $query : array();
 		$map   = array(
-			'service'   => 'kv2_service',
-			'ville'     => 'kv2_ville',
-			'meuble'    => 'kv2_meuble',
-			'style'     => 'kv2_style',
-			'technique' => 'kv2_technique',
+			'service'         => 'kv2_service',
+			'ville'           => 'kv2_ville',
+			'meuble'          => 'kv2_meuble',
+			'element_toiture' => 'kv2_meuble',
+			'style'           => 'kv2_style',
+			'materiau'        => 'kv2_style',
+			'technique'       => 'kv2_technique',
 		);
 
 		foreach ( $map as $attribute => $taxonomy ) {

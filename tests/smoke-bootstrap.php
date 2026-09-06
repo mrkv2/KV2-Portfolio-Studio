@@ -32,7 +32,7 @@ function is_admin() {
 	return false;
 }
 function home_url( $path = '/' ) {
-	return 'https://example.test' . $path;
+	return rtrim( $GLOBALS['kv2ps_home_url'], '/' ) . $path;
 }
 function get_page_by_path( $path ) {
 	if ( empty( $GLOBALS['kv2ps_page_path'] ) || $path !== $GLOBALS['kv2ps_page_path'] ) {
@@ -44,10 +44,10 @@ function get_page_by_path( $path ) {
 }
 function get_permalink( $post_id = 0 ) {
 	unset( $post_id );
-	return 'https://example.test/' . $GLOBALS['kv2ps_page_path'] . '/';
+	return rtrim( $GLOBALS['kv2ps_home_url'], '/' ) . '/' . $GLOBALS['kv2ps_page_path'] . '/';
 }
 function get_bloginfo( $key ) {
-	return 'name' === $key ? 'Atelier Exemple' : '';
+	return 'name' === $key ? $GLOBALS['kv2ps_site_name'] : '';
 }
 function get_option( $key, $default = false ) {
 	return array_key_exists( $key, $GLOBALS['kv2ps_test_options'] ) ? $GLOBALS['kv2ps_test_options'][ $key ] : $default;
@@ -64,6 +64,9 @@ function sanitize_title( $value ) {
 	$value = strtolower( $value );
 	$value = preg_replace( '/[^a-z0-9]+/', '-', $value );
 	return trim( $value, '-' );
+}
+function sanitize_key( $value ) {
+	return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $value ) );
 }
 function absint( $value ) {
 	return abs( (int) $value );
@@ -208,6 +211,8 @@ $GLOBALS['kv2ps_test_options'] = array(
 		'archive_load_mode'      => 'paged',
 	),
 );
+$GLOBALS['kv2ps_home_url'] = 'https://example.test';
+$GLOBALS['kv2ps_site_name'] = 'Atelier Exemple';
 $GLOBALS['kv2ps_page_path'] = '';
 $GLOBALS['kv2ps_test_terms']       = array();
 $GLOBALS['kv2ps_test_assignments'] = array();
@@ -237,6 +242,9 @@ if ( 'existing_page' === $migrated['routing_mode'] || '0' !== $migrated['legacy_
 }
 if ( KV2PS_VERSION !== $GLOBALS['kv2ps_test_options']['kv2ps_version'] ) {
 	throw new RuntimeException( 'Installed version was not upgraded to the current plugin version.' );
+}
+if ( KV2PS_Plugin::PROFILE_UPHOLSTERY !== $migrated['business_profile'] ) {
+	throw new RuntimeException( 'The existing generic site did not keep the upholstery business profile.' );
 }
 
 $GLOBALS['kv2ps_test_options'] = array(
@@ -323,6 +331,23 @@ $search_where = KV2PS_Plugin::instance()->extend_portfolio_search(
 );
 if ( false === strpos( $search_where, 'kv2_ville' ) || false === strpos( $search_where, '_kv2ps_postal_code' ) || false === strpos( $search_where, '_kv2ps_confidential' ) ) {
 	throw new RuntimeException( 'The public search does not include the safe location fields.' );
+}
+
+$GLOBALS['kv2ps_home_url'] = 'https://ets-mon-toit.fr';
+$GLOBALS['kv2ps_site_name'] = 'ETS Mon Toit';
+$GLOBALS['kv2ps_page_path'] = 'realisations-couvreur';
+$GLOBALS['kv2ps_test_options']['kv2ps_settings'] = array( 'business_profile' => KV2PS_Plugin::PROFILE_ROOFING );
+$roofing_defaults = KV2PS_Plugin::default_settings();
+if ( KV2PS_Plugin::PROFILE_ROOFING !== $roofing_defaults['business_profile'] || 'existing_page' !== $roofing_defaults['routing_mode'] || 'https://ets-mon-toit.fr/realisations-couvreur/' !== $roofing_defaults['portfolio_page_url'] ) {
+	throw new RuntimeException( 'ETS Mon Toit did not receive the protected roofing routing profile.' );
+}
+if ( '#DCA54A' !== $roofing_defaults['accent_color'] || '01 84 19 07 62' !== $roofing_defaults['phone'] || '+33698549645' !== $roofing_defaults['whatsapp'] || 'https://ets-mon-toit.fr/#devis' !== $roofing_defaults['form_url'] ) {
+	throw new RuntimeException( 'ETS Mon Toit contact and brand defaults are incomplete.' );
+}
+$roofing_taxonomies = KV2PS_Post_Types::taxonomy_config();
+$roofing_package_map = KV2PS_Post_Types::package_taxonomy_map();
+if ( 'Éléments de toiture' !== $roofing_taxonomies['kv2_meuble'][0] || 'Matériaux' !== $roofing_taxonomies['kv2_style'][0] || 'kv2_meuble' !== $roofing_package_map['elements_toiture'] || 'kv2_style' !== $roofing_package_map['materiaux'] ) {
+	throw new RuntimeException( 'The roofing taxonomy profile is incomplete.' );
 }
 
 echo "Bootstrap smoke test passed.\n";

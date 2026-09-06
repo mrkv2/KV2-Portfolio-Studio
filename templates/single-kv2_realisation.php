@@ -11,6 +11,7 @@ while ( have_posts() ) :
 	the_post();
 	$post_id      = get_the_ID();
 	$settings     = KV2PS_Plugin::settings();
+	$roofing      = KV2PS_Plugin::PROFILE_ROOFING === KV2PS_Plugin::business_profile( $settings );
 	$before_ids   = KV2PS_Post_Types::sanitize_ids( get_post_meta( $post_id, '_kv2ps_before_images', true ) );
 	$after_ids    = KV2PS_Post_Types::sanitize_ids( get_post_meta( $post_id, '_kv2ps_after_images', true ) );
 	$project_date = get_post_meta( $post_id, '_kv2ps_project_date', true );
@@ -55,11 +56,7 @@ while ( have_posts() ) :
 						if ( $service_terms && ! is_wp_error( $service_terms ) ) {
 							echo '<nav class="kv2ps-taxonomy-chips" aria-label="' . esc_attr__( 'Catégories de la réalisation', 'kv2-portfolio-studio' ) . '">';
 							foreach ( $service_terms as $service_term ) {
-								$service_url = get_term_meta( $service_term->term_id, '_kv2ps_landing_url', true );
-								$service_tax = get_taxonomy( 'kv2_service' );
-								if ( ! $service_url && $service_tax && $service_tax->publicly_queryable ) {
-									$service_url = get_term_link( $service_term );
-								}
+								$service_url = KV2PS_Internal_Links::term_url( $service_term, 'kv2_service' );
 								if ( $service_url && ! is_wp_error( $service_url ) ) {
 									echo '<a href="' . esc_url( $service_url ) . '">' . esc_html( $service_term->name ) . '</a>';
 								} else {
@@ -125,7 +122,7 @@ while ( have_posts() ) :
 				$detail_items       = array();
 				$detail_fields      = array(
 					'_kv2ps_duration'      => __( 'Durée', 'kv2-portfolio-studio' ),
-					'_kv2ps_work_type'     => __( 'Transformation', 'kv2-portfolio-studio' ),
+					'_kv2ps_work_type'     => $roofing ? __( 'Type d’intervention', 'kv2-portfolio-studio' ) : __( 'Transformation', 'kv2-portfolio-studio' ),
 					'_kv2ps_initial_state' => __( 'État initial', 'kv2-portfolio-studio' ),
 					'_kv2ps_constraints'   => __( 'Contraintes', 'kv2-portfolio-studio' ),
 					'_kv2ps_price_range'   => __( 'Fourchette indicative', 'kv2-portfolio-studio' ),
@@ -147,11 +144,8 @@ while ( have_posts() ) :
 					}
 					$links = array();
 					foreach ( $terms as $term ) {
-						$url = get_term_meta( $term->term_id, '_kv2ps_landing_url', true );
-						if ( ! $url && $taxonomy_object->publicly_queryable ) {
-							$url = get_term_link( $term );
-						}
-						$links[] = is_wp_error( $url ) ? esc_html( $term->name ) : '<a href="' . esc_url( $url ) . '">' . esc_html( $term->name ) . '</a>';
+						$url     = KV2PS_Internal_Links::term_url( $term, $taxonomy );
+						$links[] = $url ? '<a href="' . esc_url( $url ) . '">' . esc_html( $term->name ) . '</a>' : esc_html( $term->name );
 					}
 					$detail_items[] = array( 'label' => $taxonomy_object->labels->singular_name, 'value' => implode( ', ', $links ) );
 				}
@@ -176,7 +170,7 @@ while ( have_posts() ) :
 				<?php if ( $has_primary_column || $has_side_column ) : ?>
 				<div class="kv2ps-project-layout<?php echo esc_attr( $layout_modifier ); ?>">
 					<?php if ( $editor_content ) : ?><div class="kv2ps-editor-content"><?php the_content(); ?></div><?php endif; ?>
-					<?php if ( $materials ) : ?><aside class="kv2ps-note"><h2><?php esc_html_e( 'Matières et finitions', 'kv2-portfolio-studio' ); ?></h2><p><?php echo nl2br( esc_html( $materials ) ); ?></p></aside><?php endif; ?>
+					<?php if ( $materials ) : ?><aside class="kv2ps-note"><h2><?php echo esc_html( $roofing ? __( 'Matériaux et fournitures', 'kv2-portfolio-studio' ) : __( 'Matières et finitions', 'kv2-portfolio-studio' ) ); ?></h2><p><?php echo nl2br( esc_html( $materials ) ); ?></p></aside><?php endif; ?>
 					<?php if ( $testimonial_ready ) :
 						$testimonial_author = $confidential ? __( 'Client', 'kv2-portfolio-studio' ) : get_post_meta( $post_id, '_kv2ps_testimonial_author', true );
 						$testimonial_source = get_post_meta( $post_id, '_kv2ps_testimonial_source', true );

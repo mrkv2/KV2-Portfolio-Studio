@@ -1,0 +1,135 @@
+{
+  "schema_version": "1.1",
+  "source": {
+    "generator": "ChatGPT",
+    "generated_at": "2026-08-25T00:00:00Z",
+    "site": "https://ets-mon-toit.fr/",
+    "business_profile": "roofing",
+    "status_policy": "draft_only",
+    "client_notes": "Chantier à Chaville : dépose d’une couverture en tuiles mécaniques de 15 m² présentant des malfaçons sur une faible pente et de nombreuses fuites, puis pose d’une couverture en zinc VMZINC avec reprise de l’étanchéité du VELUX existant."
+  },
+  "project": {
+    "match": {
+      "realisation_id": null,
+      "source_reference": "ETS-MON-TOIT-CHAVILLE-ZINC-2026-08"
+    },
+    "fields": {
+      "title": "Remplacement d’une toiture en tuiles par une couverture en zinc à Chaville (92)",
+      "excerpt": "À Chaville, remplacement d’une couverture en tuiles mécaniques de 15 m², inadaptée à la faible pente et sujette aux fuites, par une couverture en zinc VMZINC avec reprise de l’étanchéité du VELUX existant.",
+      "content": "<p>Cette couverture en tuiles mécaniques présentait plusieurs défauts sur une toiture à faible pente et provoquait de nombreuses infiltrations.</p><p>ETS Mon Toit a déposé l’ancienne couverture sur environ 15 m², puis réalisé une nouvelle couverture en zinc VMZINC. Les raccords d’étanchéité autour du VELUX existant ont également été repris.</p>",
+      "problem": "La couverture en tuiles mécaniques présentait plusieurs malfaçons sur une faible pente et provoquait de nombreuses fuites.",
+      "initial_state": "Couverture en tuiles mécaniques d’environ 15 m², inadaptée à la configuration de faible pente et présentant des défauts d’étanchéité.",
+      "constraints": "Conserver le VELUX existant et reprendre soigneusement ses raccords d’étanchéité.",
+      "intervention": "Dépose complète de l’ancienne couverture en tuiles mécaniques, préparation du support, pose d’une couverture en zinc VMZINC sur environ 15 m² et réalisation des raccords d’étanchéité autour du VELUX existant.",
+      "result": "La toiture dispose désormais d’une couverture en zinc adaptée à sa configuration, avec des raccords d’étanchéité repris autour du VELUX.",
+      "materials": "Couverture en zinc VMZINC et raccords d’étanchéité autour du VELUX existant.",
+      "duration": "",
+      "work_type": "Remplacement de couverture",
+      "price_range": "",
+      "project_date": "",
+      "confidential": false
+    },
+    "location": {
+      "city": "Chaville",
+      "department": "92",
+      "postal_code": "92370"
+    },
+    "testimonial": {
+      "quote": "",
+      "author": "",
+      "source": "",
+      "source_url": "",
+      "rating": "",
+      "date": "",
+      "consent": false
+    },
+    "taxonomies": {
+      "services": [
+        { "name": "Rénovation de toiture", "slug": "renovation-toiture" },
+        { "name": "Zinguerie et évacuation des eaux pluviales", "slug": "zinguerie" }
+      ],
+      "villes": [
+        { "name": "Chaville (92)", "slug": "chaville" }
+      ],
+      "elements_toiture": [
+        { "name": "Fenêtre de toit VELUX", "slug": "fenetre-toit-velux" }
+      ],
+      "materiaux": [
+        { "name": "Zinc VMZINC", "slug": "zinc-vmzinc" }
+      ],
+      "techniques": [
+        { "name": "Raccord d’étanchéité", "slug": "raccord-etancheite" }
+      ]
+    },
+    "cta": {
+      "use_global": true,
+      "title": "Un projet de toiture ?",
+      "text": "Fuite, rénovation, couverture, zinguerie ou fenêtre de toit : échangeons sur votre chantier.",
+      "primary_action": "click_to_chat",
+      "primary_label": "Envoyer des photos sur WhatsApp",
+      "secondary_enabled": "1",
+      "secondary_label": "Demander un devis gratuit",
+      "form_url": "https://ets-mon-toit.fr/#devis",
+      "ctc_trigger": "ctc_greetings"
+    },
+    "seo": {
+      "title": "Couverture en zinc à Chaville (92) | ETS Mon Toit",
+      "description": "À Chaville, ETS Mon Toit a remplacé une toiture en tuiles présentant des fuites par une couverture en zinc VMZINC de 15 m² avec étanchéité du VELUX.",
+      "focus_keyword": "couverture zinc Chaville"
+    },
+    "images": [
+      {
+        "match": {
+          "attachment_id": null,
+          "filename": "WhatsApp Image 2026-08-25 at 11.32.30 (2).jpeg"
+        },
+        "role": "featured",
+        "position": 0,
+        "fields": {
+          "title": "Couverture en zinc avec VELUX à Chaville",
+          "alt": "Vue aérienne d’une couverture en zinc autour d’un VELUX sur une toiture à Chaville",
+          "caption": "La couverture en zinc réalisée autour du VELUX existant.",
+          "description": "Vue aérienne générale de la couverture en zinc et de ses raccords autour du VELUX.",
+          "credit": "",
+          "copyright": "",
+          "keywords": ["couverture en zinc", "VELUX", "Chaville", "toiture faible pente"],
+          "location": {
+            "city": "Chaville",
+            "region": "Hauts-de-Seine",
+            "country": "FR"
+          },
+          "date_created": "",
+          "license_url": "",
+          "acquire_license_url": ""
+        },
+        "exif_suggestions": {}
+      },
+      {
+        "match": {
+          "attachment_id": null,
+          "filename": "WhatsApp Image 2026-08-25 at 11.32.30 (1).jpeg"
+        },
+        "role": "after",
+        "position": 1,
+        "fields": {
+          "title": "Finitions de la couverture en zinc à Chaville",
+          "alt": "Couverture en zinc de forme triangulaire avec VELUX vue depuis le dessus",
+          "caption": "Vue finale de la couverture en zinc et du raccord autour du VELUX.",
+          "description": "Vue depuis le dessus de la couverture en zinc installée le long de la toiture principale en tuiles.",
+          "credit": "",
+          "copyright": "",
+          "keywords": ["couverture zinc", "étanchéité VELUX", "Chaville", "zinguerie"],
+          "location": {
+            "city": "Chaville",
+            "region": "Hauts-de-Seine",
+            "country": "FR"
+          },
+          "date_created": "",
+          "license_url": "",
+          "acquire_license_url": ""
+        },
+        "exif_suggestions": {}
+      }
+    ]
+  }
+}
