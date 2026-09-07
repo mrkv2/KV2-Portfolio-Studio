@@ -184,26 +184,10 @@ final class KV2PS_Image_Metadata {
 
 	private static function read_submitted_json() {
 		$json = isset( $_POST['kv2ps_json_payload'] ) ? trim( wp_unslash( $_POST['kv2ps_json_payload'] ) ) : '';
-
-		if ( ! empty( $_FILES['kv2ps_json_file']['tmp_name'] ) ) {
-			$file = $_FILES['kv2ps_json_file'];
-			if ( ! empty( $file['error'] ) || $file['size'] > 1048576 ) {
-				return new WP_Error( 'invalid_upload', __( 'Le fichier JSON est invalide ou dépasse 1 Mo.', 'kv2-portfolio-studio' ) );
-			}
-			$extension = strtolower( pathinfo( sanitize_file_name( $file['name'] ), PATHINFO_EXTENSION ) );
-			if ( 'json' !== $extension ) {
-				return new WP_Error( 'invalid_extension', __( 'Seuls les fichiers .json sont acceptés.', 'kv2-portfolio-studio' ) );
-			}
-			$json = file_get_contents( $file['tmp_name'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-		}
-
-		if ( ! $json ) {
-			return new WP_Error( 'empty_json', __( 'Ajoutez un fichier JSON ou collez son contenu.', 'kv2-portfolio-studio' ) );
-		}
-
-		$data = json_decode( $json, true );
-		if ( JSON_ERROR_NONE !== json_last_error() || ! is_array( $data ) ) {
-			return new WP_Error( 'bad_json', sprintf( __( 'JSON illisible : %s', 'kv2-portfolio-studio' ), json_last_error_msg() ) );
+		$file = isset( $_FILES['kv2ps_json_file'] ) && is_array( $_FILES['kv2ps_json_file'] ) ? $_FILES['kv2ps_json_file'] : array();
+		$data = KV2PS_JSON::read( $json, $file, 1048576 );
+		if ( is_wp_error( $data ) ) {
+			return $data;
 		}
 
 		if ( empty( $data['schema_version'] ) || empty( $data['images'] ) || ! is_array( $data['images'] ) ) {
