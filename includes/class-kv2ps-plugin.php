@@ -3,6 +3,9 @@
 defined( 'ABSPATH' ) || exit;
 
 final class KV2PS_Plugin {
+	const PROFILE_UPHOLSTERY = 'upholstery';
+	const PROFILE_ROOFING    = 'roofing';
+
 	private static $instance;
 
 	public static function instance() {
@@ -19,10 +22,14 @@ final class KV2PS_Plugin {
 		add_action( 'init', array( 'KV2PS_Post_Types', 'register' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_frontend_assets' ) );
 		add_action( 'pre_get_posts', array( $this, 'configure_archive_query' ) );
+		add_filter( 'posts_where', array( $this, 'extend_portfolio_search' ), 10, 2 );
 		add_filter( 'template_include', array( $this, 'template_include' ) );
 		add_shortcode( 'kv2_portfolio', array( $this, 'portfolio_shortcode' ) );
+		add_action( 'update_option_kv2ps_settings', array( __CLASS__, 'maybe_flush_routing_rules' ), 10, 3 );
 
 		KV2PS_Image_Metadata::init();
+		KV2PS_Compatibility::init();
+		KV2PS_SEO::init();
 		KV2PS_Schema::init();
 		KV2PS_Redirects::init();
 
@@ -94,8 +101,12 @@ final class KV2PS_Plugin {
 
 		if ( version_compare( $installed_version, '1.1.6', '<' ) ) {
 			$defaults = self::default_settings();
-			$settings['phone']               = '04 11 93 96 29';
-			$settings['ctc_trigger']         = 'ctc_greetings';
+			if ( ! isset( $settings['phone'] ) ) {
+				$settings['phone'] = $defaults['phone'];
+			}
+			if ( ! isset( $settings['ctc_trigger'] ) ) {
+				$settings['ctc_trigger'] = 'ctc_greetings';
+			}
 
 			if ( empty( $settings['cta_title'] ) || 'Vous avez un projet similaire ?' === $settings['cta_title'] ) {
 				$settings['cta_title'] = $defaults['cta_title'];
@@ -110,20 +121,89 @@ final class KV2PS_Plugin {
 			}
 		}
 
+		if ( version_compare( $installed_version, '1.1.7', '<' ) ) {
+			$defaults = self::default_settings();
+			foreach ( array( 'portfolio_seo_title', 'portfolio_meta_description', 'redirect_archive_to_portfolio' ) as $key ) {
+				if ( ! isset( $settings[ $key ] ) ) {
+					$settings[ $key ] = $defaults[ $key ];
+				}
+			}
+			if ( empty( $settings['archive_title'] ) || 'Nos réalisations' === $settings['archive_title'] ) {
+				$settings['archive_title'] = $defaults['archive_title'];
+			}
+			$settings['rank_math_schema'] = '1';
+		}
+
+		if ( version_compare( $installed_version, '1.1.8', '<' ) ) {
+			$defaults = self::default_settings();
+			foreach ( array( 'routing_mode', 'single_slug', 'legacy_shortcode_alias' ) as $key ) {
+				if ( ! isset( $settings[ $key ] ) ) {
+					$settings[ $key ] = $defaults[ $key ];
+				}
+			}
+		}
+
+		if ( version_compare( $installed_version, '1.2.0', '<' ) ) {
+			$profile                      = self::business_profile( $settings );
+			$settings['business_profile'] = $profile;
+			if ( self::PROFILE_ROOFING === $profile ) {
+				$defaults     = self::default_settings();
+				$legacy_values = array(
+					'archive_title'              => array( '', 'Nos réalisations', 'Nos réalisations de tapisserie d’ameublement' ),
+					'portfolio_page_url'         => array( '', home_url( '/realisation-tapisserie/' ) ),
+					'portfolio_seo_title'        => array( '', 'Réalisations de tapisserie d’ameublement | ' . get_bloginfo( 'name' ) ),
+					'portfolio_meta_description' => array( '', 'Découvrez nos réalisations de tapisserie d’ameublement : fauteuils, chaises et canapés restaurés, cannage, rempaillage et réfection complète.' ),
+					'accent_color'               => array( '', '#9b6b43' ),
+					'cta_title'                  => array( '', 'Vous avez un projet similaire ?', 'Un meuble à restaurer ?' ),
+					'cta_text'                   => array( '', 'Parlons de votre meuble, de vos contraintes et du résultat souhaité.', 'Chaise, fauteuil, canapé ou tapis — cannage, rempaillage et réfection complète.' ),
+					'single_slug'                => array( '', 'realisation' ),
+				);
+				foreach ( $legacy_values as $key => $legacy ) {
+					$current = isset( $settings[ $key ] ) ? (string) $settings[ $key ] : '';
+					if ( in_array( $current, $legacy, true ) ) {
+						$settings[ $key ] = $defaults[ $key ];
+					}
+				}
+				foreach ( array( 'archive_intro', 'phone', 'whatsapp', 'cta_process_title', 'cta_process_steps', 'cta_benefits', 'cta_primary_label', 'cta_secondary_label', 'form_url', 'contact_url' ) as $key ) {
+					if ( empty( $settings[ $key ] ) ) {
+						$settings[ $key ] = $defaults[ $key ];
+					}
+				}
+				if ( self::detect_published_page( 'realisations-couvreur' ) ) {
+					$settings['routing_mode']                  = 'existing_page';
+					$settings['redirect_archive_to_portfolio'] = '0';
+				}
+			}
+		}
+
 		update_option( 'kv2ps_settings', $settings );
 		update_option( 'kv2ps_version', KV2PS_VERSION );
 	}
 
 	public static function default_settings() {
+		$profile        = self::detect_business_profile();
+		$profile_data   = self::profile_defaults( $profile );
+		$protected_page = self::detect_published_page( 'realisations' );
+		if ( self::PROFILE_ROOFING === $profile ) {
+			$protected_page = self::detect_published_page( 'realisations-couvreur' ) ?: $protected_page;
+		}
+		$existing_page = $protected_page ?: self::detect_published_page( self::PROFILE_ROOFING === $profile ? 'realisations-couvreur' : 'realisation-tapisserie' );
 		return array(
-			'archive_title'              => 'Nos réalisations',
-			'archive_intro'              => '',
-			'portfolio_page_url'         => home_url( '/realisation-tapisserie/' ),
+			'business_profile'           => $profile,
+			'archive_title'              => $profile_data['archive_title'],
+			'archive_intro'              => $profile_data['archive_intro'],
+			'portfolio_page_url'         => $existing_page ?: home_url( $profile_data['portfolio_path'] ),
+			'portfolio_seo_title'        => $profile_data['portfolio_seo_title'],
+			'portfolio_meta_description' => $profile_data['portfolio_meta_description'],
+			'routing_mode'               => $protected_page ? 'existing_page' : 'standard',
+			'single_slug'                => $profile_data['single_slug'],
+			'redirect_archive_to_portfolio' => $protected_page ? '0' : '1',
+			'legacy_shortcode_alias'     => '0',
 			'contact_url'                => home_url( '/contact/' ),
-			'phone'                      => '04 11 93 96 29',
-			'whatsapp'                   => '',
-			'accent_color'               => '#9b6b43',
-			'rank_math_schema'           => '0',
+			'phone'                      => $profile_data['phone'],
+			'whatsapp'                   => $profile_data['whatsapp'],
+			'accent_color'               => $profile_data['accent_color'],
+			'rank_math_schema'           => '1',
 			'image_schema'               => '1',
 			'archive_layout'             => 'masonry',
 			'archive_columns'            => '3',
@@ -135,17 +215,17 @@ final class KV2PS_Plugin {
 			'archive_show_search'        => '1',
 			'archive_show_cta'           => '1',
 			'before_after_mode'          => 'columns',
-			'cta_title'                  => 'Un meuble à restaurer ?',
-			'cta_text'                   => 'Chaise, fauteuil, canapé ou tapis — cannage, rempaillage et réfection complète.',
-			'cta_process_title'          => 'Comment ça se passe',
-			'cta_process_steps'          => "Vous envoyez des photos via le formulaire ou WhatsApp.\nNous vous donnons une estimation rapide.\nNous récupérons vos meubles sur rendez-vous.\nNous les livrons une fois restaurés.",
-			'cta_benefits'               => "Devis gratuit\nEnlèvement + livraison\nPaiement en 4 fois",
+			'cta_title'                  => $profile_data['cta_title'],
+			'cta_text'                   => $profile_data['cta_text'],
+			'cta_process_title'          => $profile_data['cta_process_title'],
+			'cta_process_steps'          => $profile_data['cta_process_steps'],
+			'cta_benefits'               => $profile_data['cta_benefits'],
 			'cta_show_opening_status'    => '1',
 			'cta_primary_action'         => 'click_to_chat',
-			'cta_primary_label'          => 'Échanger sur WhatsApp',
+			'cta_primary_label'          => $profile_data['cta_primary_label'],
 			'cta_secondary_enabled'      => '1',
-			'cta_secondary_label'        => 'Envoyer une demande',
-			'form_url'                   => home_url( '/contact/' ),
+			'cta_secondary_label'        => $profile_data['cta_secondary_label'],
+			'form_url'                   => home_url( $profile_data['form_path'] ),
 			'ctc_trigger'                => 'ctc_greetings',
 			'image_creator_type'         => 'Organization',
 			'image_creator_name'         => get_bloginfo( 'name' ),
@@ -158,13 +238,105 @@ final class KV2PS_Plugin {
 		);
 	}
 
+	public static function business_profile( $settings = null ) {
+		if ( null === $settings ) {
+			$settings = get_option( 'kv2ps_settings', array() );
+		}
+		$profile = is_array( $settings ) && isset( $settings['business_profile'] ) ? sanitize_key( $settings['business_profile'] ) : '';
+		return in_array( $profile, array( self::PROFILE_UPHOLSTERY, self::PROFILE_ROOFING ), true ) ? $profile : self::detect_business_profile();
+	}
+
+	public static function detect_business_profile() {
+		$site_url = home_url( '/' );
+		$host     = function_exists( 'wp_parse_url' ) ? wp_parse_url( $site_url, PHP_URL_HOST ) : parse_url( $site_url, PHP_URL_HOST );
+		$host     = strtolower( (string) $host );
+		$site_name = strtolower( (string) get_bloginfo( 'name' ) );
+		if ( false !== strpos( $host, 'ets-mon-toit' ) || preg_match( '/\b(couvreur|toiture|zinguerie)\b/u', $site_name ) ) {
+			return self::PROFILE_ROOFING;
+		}
+		return self::PROFILE_UPHOLSTERY;
+	}
+
+	public static function profile_defaults( $profile = '' ) {
+		$profile  = in_array( $profile, array( self::PROFILE_UPHOLSTERY, self::PROFILE_ROOFING ), true ) ? $profile : self::detect_business_profile();
+		$site_name = get_bloginfo( 'name' );
+		if ( self::PROFILE_ROOFING === $profile ) {
+			return array(
+				'archive_title'              => 'Nos réalisations de couverture et de zinguerie',
+				'archive_intro'              => 'Découvrez les chantiers réalisés par ETS Mon Toit dans les Yvelines (78), les Hauts-de-Seine (92) et le Val-d’Oise (95) : rénovation de toiture, recherche de fuite, couverture, zinguerie et pose de fenêtres de toit.',
+				'portfolio_path'             => '/realisations-couvreur/',
+				'portfolio_seo_title'        => 'Réalisations de toiture, couverture et zinguerie | ETS Mon Toit',
+				'portfolio_meta_description' => 'Découvrez les réalisations d’ETS Mon Toit : rénovation de toiture, zinguerie, étanchéité, recherche de fuite et pose de Velux dans les 78, 92 et 95.',
+				'single_slug'                => 'chantier',
+				'phone'                      => '01 84 19 07 62',
+				'whatsapp'                   => '+33698549645',
+				'accent_color'               => '#DCA54A',
+				'cta_title'                  => 'Un projet de toiture ?',
+				'cta_text'                   => 'Fuite, rénovation, couverture, zinguerie ou fenêtre de toit : échangeons sur votre chantier.',
+				'cta_process_title'          => 'Comment se déroule votre projet',
+				'cta_process_steps'          => "Vous nous envoyez des photos et votre ville via WhatsApp ou le formulaire.\nNous analysons votre demande et convenons d’un rendez-vous si nécessaire.\nVous recevez un devis gratuit et détaillé.\nAprès validation, nous planifions et réalisons les travaux.",
+				'cta_benefits'               => "Devis gratuit\nIntervention rapide\nCouverture et zinguerie",
+				'cta_primary_label'          => 'Envoyer des photos sur WhatsApp',
+				'cta_secondary_label'        => 'Demander un devis gratuit',
+				'form_path'                  => '/#devis',
+			);
+		}
+
+		return array(
+			'archive_title'              => 'Nos réalisations de tapisserie d’ameublement',
+			'archive_intro'              => '',
+			'portfolio_path'             => '/realisation-tapisserie/',
+			'portfolio_seo_title'        => 'Réalisations de tapisserie d’ameublement | ' . $site_name,
+			'portfolio_meta_description' => 'Découvrez nos réalisations de tapisserie d’ameublement : fauteuils, chaises et canapés restaurés, cannage, rempaillage et réfection complète.',
+			'single_slug'                => 'realisation',
+			'phone'                      => '',
+			'whatsapp'                   => '',
+			'accent_color'               => '#9b6b43',
+			'cta_title'                  => 'Un meuble à restaurer ?',
+			'cta_text'                   => 'Chaise, fauteuil, canapé ou tapis — cannage, rempaillage et réfection complète.',
+			'cta_process_title'          => 'Comment ça se passe',
+			'cta_process_steps'          => "Vous envoyez des photos via le formulaire ou WhatsApp.\nNous vous donnons une estimation rapide.\nNous récupérons vos meubles sur rendez-vous.\nNous les livrons une fois restaurés.",
+			'cta_benefits'               => "Devis gratuit\nEnlèvement + livraison\nPaiement en 4 fois",
+			'cta_primary_label'          => 'Échanger sur WhatsApp',
+			'cta_secondary_label'        => 'Envoyer une demande',
+			'form_path'                  => '/contact/',
+		);
+	}
+
+	private static function detect_published_page( $path ) {
+		if ( ! function_exists( 'get_page_by_path' ) || ! function_exists( 'get_permalink' ) ) {
+			return '';
+		}
+		$page = get_page_by_path( $path, OBJECT, 'page' );
+		if ( $page instanceof WP_Post && 'publish' === $page->post_status ) {
+			return (string) get_permalink( $page->ID );
+		}
+		return '';
+	}
+
+	public static function maybe_flush_routing_rules( $old_value, $new_value, $option ) {
+		unset( $option );
+		$old_value = is_array( $old_value ) ? $old_value : array();
+		$new_value = is_array( $new_value ) ? $new_value : array();
+		foreach ( array( 'business_profile', 'routing_mode', 'single_slug' ) as $key ) {
+			if ( (string) ( isset( $old_value[ $key ] ) ? $old_value[ $key ] : '' ) !== (string) ( isset( $new_value[ $key ] ) ? $new_value[ $key ] : '' ) ) {
+				KV2PS_Post_Types::register();
+				flush_rewrite_rules();
+				return;
+			}
+		}
+	}
+
 	public static function deactivate() {
 		flush_rewrite_rules();
 	}
 
 	public function enqueue_frontend_assets() {
 		global $post;
-		$has_shortcode = is_singular() && $post instanceof WP_Post && has_shortcode( $post->post_content, 'kv2_portfolio' );
+		$has_shortcode = is_singular() && $post instanceof WP_Post && (
+			has_shortcode( $post->post_content, 'kv2_portfolio' )
+			|| ( KV2PS_Compatibility::legacy_alias_registered() && has_shortcode( $post->post_content, 'wp_portfolio' ) )
+		);
 		if ( is_singular( KV2PS_Post_Types::POST_TYPE ) || is_post_type_archive( KV2PS_Post_Types::POST_TYPE ) || is_tax( KV2PS_Post_Types::taxonomies() ) || $has_shortcode ) {
 			$this->enqueue_styles();
 		}
@@ -205,8 +377,69 @@ final class KV2PS_Plugin {
 			$query->set( 'tax_query', $tax_query );
 		}
 		if ( $search ) {
-			$query->set( 's', $search );
+			$query->set( 'kv2ps_search_term', $search );
 		}
+	}
+
+	public function extend_portfolio_search( $where, $query ) {
+		$search       = $query->get( 'kv2ps_search_term' );
+		$is_portfolio = KV2PS_Post_Types::POST_TYPE === $query->get( 'post_type' )
+			|| $query->is_post_type_archive( KV2PS_Post_Types::POST_TYPE )
+			|| $query->is_tax( KV2PS_Post_Types::taxonomies() );
+		if ( ! is_string( $search ) || '' === trim( $search ) || ! $is_portfolio ) {
+			return $where;
+		}
+
+		global $wpdb;
+		$search    = sanitize_text_field( $search );
+		$text_like = '%' . $wpdb->esc_like( $search ) . '%';
+		$slug_like = '%' . $wpdb->esc_like( sanitize_title( $search ) ) . '%';
+		$where    .= $wpdb->prepare(
+			" AND (
+				{$wpdb->posts}.post_title LIKE %s
+				OR {$wpdb->posts}.post_excerpt LIKE %s
+				OR {$wpdb->posts}.post_content LIKE %s
+				OR EXISTS (
+					SELECT 1
+					FROM {$wpdb->term_relationships} kv2ps_tr
+					INNER JOIN {$wpdb->term_taxonomy} kv2ps_tt ON kv2ps_tt.term_taxonomy_id = kv2ps_tr.term_taxonomy_id
+					INNER JOIN {$wpdb->terms} kv2ps_t ON kv2ps_t.term_id = kv2ps_tt.term_id
+					WHERE kv2ps_tr.object_id = {$wpdb->posts}.ID
+					AND kv2ps_tt.taxonomy IN ('kv2_service','kv2_ville','kv2_meuble','kv2_style','kv2_technique')
+					AND (
+						kv2ps_tt.taxonomy <> 'kv2_ville'
+						OR NOT EXISTS (
+							SELECT 1 FROM {$wpdb->postmeta} kv2ps_private_city
+							WHERE kv2ps_private_city.post_id = {$wpdb->posts}.ID
+							AND kv2ps_private_city.meta_key = '_kv2ps_confidential'
+							AND kv2ps_private_city.meta_value = '1'
+						)
+					)
+					AND (kv2ps_t.name LIKE %s OR kv2ps_t.slug LIKE %s)
+				)
+				OR EXISTS (
+					SELECT 1
+					FROM {$wpdb->postmeta} kv2ps_pm
+					WHERE kv2ps_pm.post_id = {$wpdb->posts}.ID
+					AND kv2ps_pm.meta_key IN ('_kv2ps_city','_kv2ps_department','_kv2ps_postal_code')
+					AND kv2ps_pm.meta_value LIKE %s
+					AND NOT EXISTS (
+						SELECT 1 FROM {$wpdb->postmeta} kv2ps_private_meta
+						WHERE kv2ps_private_meta.post_id = {$wpdb->posts}.ID
+						AND kv2ps_private_meta.meta_key = '_kv2ps_confidential'
+						AND kv2ps_private_meta.meta_value = '1'
+					)
+				)
+			)",
+			$text_like,
+			$text_like,
+			$text_like,
+			$text_like,
+			$slug_like,
+			$text_like
+		);
+
+		return $where;
 	}
 
 	public function template_include( $template ) {
@@ -226,10 +459,12 @@ final class KV2PS_Plugin {
 		return $theme_template ? $theme_template : KV2PS_DIR . 'templates/' . $plugin_template;
 	}
 
-	public function portfolio_shortcode( $atts ) {
+	public function portfolio_shortcode( $atts, $content = null, $shortcode_tag = 'kv2_portfolio' ) {
+		unset( $content, $shortcode_tag );
 		$this->enqueue_styles();
 		$settings = self::settings();
-		$atts     = is_array( $atts ) ? $atts : array();
+		$atts     = KV2PS_Compatibility::normalize_legacy_atts( $atts );
+		$legacy_tax_query = KV2PS_Compatibility::legacy_tax_query( $atts );
 		$preset   = isset( $atts['preset'] ) ? sanitize_key( $atts['preset'] ) : 'classic';
 		$defaults = 'settings' === $preset
 			? array(
@@ -258,9 +493,17 @@ final class KV2PS_Plugin {
 			array_merge(
 				$defaults,
 				array(
-				'preset'       => $preset,
-				'service'    => '',
-				'ville'      => '',
+					'preset'       => $preset,
+					'service'      => '',
+					'ville'        => '',
+					'meuble'       => '',
+					'element_toiture' => '',
+					'style'        => '',
+					'materiau'     => '',
+					'technique'    => '',
+					'show_heading' => 'auto',
+					'heading'      => '',
+					'intro'        => '',
 				)
 			),
 			$atts,
@@ -278,41 +521,46 @@ final class KV2PS_Plugin {
 			'ignore_sticky_posts' => true,
 		);
 
-		$tax_query = array();
-		if ( $active_service ) {
-			$tax_query[] = array(
-				'taxonomy' => 'kv2_service',
-				'field'    => 'slug',
-				'terms'    => $active_service,
-			);
-		}
-		if ( $atts['ville'] ) {
-			$tax_query[] = array(
-				'taxonomy' => 'kv2_ville',
-				'field'    => 'slug',
-				'terms'    => sanitize_title( $atts['ville'] ),
-			);
-		}
+		$taxonomy_atts            = $atts;
+		$taxonomy_atts['service'] = $active_service;
+		$tax_query                = KV2PS_Compatibility::shortcode_tax_query( $taxonomy_atts, $legacy_tax_query );
 		if ( $tax_query ) {
 			$args['tax_query'] = $tax_query;
 		}
 		if ( $search ) {
-			$args['s'] = $search;
+			$args['kv2ps_search_term'] = $search;
 		}
 
 		$query   = new WP_Query( $args );
 		$display = self::sanitize_display_settings( $atts );
 		$key     = 'shortcode-' . substr( md5( wp_json_encode( array_diff_key( $atts, array( 'kv2ps_page' => '' ) ) ) ), 0, 10 );
+		$collection_id  = 'kv2ps-' . sanitize_html_class( $key );
+		$collection_url = get_permalink() . '#' . $collection_id;
+		$heading_mode = strtolower( trim( (string) $atts['show_heading'] ) );
+		$show_heading = 'auto' === $heading_mode
+			? KV2PS_SEO::is_primary_portfolio_page() && ! KV2PS_SEO::page_has_h1()
+			: self::enabled( $heading_mode );
+		$heading      = trim( sanitize_text_field( $atts['heading'] ) );
+		$heading      = $heading ?: trim( (string) $settings['archive_title'] );
+		$intro        = trim( wp_kses_post( $atts['intro'] ) );
+		$intro        = $intro ?: trim( (string) $settings['archive_intro'] );
 
 		ob_start();
+		if ( $show_heading && $heading ) {
+			echo '<header class="kv2ps-shortcode-header"><div class="kv2ps-eyebrow">' . esc_html__( 'Portfolio', 'kv2-portfolio-studio' ) . '</div><h1>' . esc_html( $heading ) . '</h1>';
+			if ( $intro ) {
+				echo '<div class="kv2ps-lead">' . wp_kses_post( wpautop( $intro ) ) . '</div>';
+			}
+			echo '</header>';
+		}
 		if ( $query->have_posts() ) {
 			$next_url = $paged < (int) $query->max_num_pages ? add_query_arg( 'kv2ps_page', $paged + 1 ) : '';
-			echo '<section class="kv2ps-collection" data-collection-key="' . esc_attr( $key ) . '" data-load-mode="' . esc_attr( $display['load_mode'] ) . '">';
+			echo '<section id="' . esc_attr( $collection_id ) . '" class="kv2ps-collection" data-collection-key="' . esc_attr( $key ) . '" data-load-mode="' . esc_attr( $display['load_mode'] ) . '">';
 			self::render_collection_controls(
 				$key,
 				$active_service,
 				$search,
-				get_permalink(),
+				$collection_url,
 				self::enabled( $atts['show_filters'] ),
 				self::enabled( $atts['show_search'] )
 			);
@@ -322,15 +570,17 @@ final class KV2PS_Plugin {
 				$this->render_card();
 			}
 			echo '</div>';
-			self::render_collection_navigation(
-				$query->max_num_pages,
-				$paged,
-				$next_url,
-				array(
-					'base'   => str_replace( '999999999', '%#%', esc_url_raw( add_query_arg( 'kv2ps_page', '999999999' ) ) ),
-					'format' => '',
-				)
-			);
+			if ( 'none' !== $display['load_mode'] ) {
+				self::render_collection_navigation(
+					$query->max_num_pages,
+					$paged,
+					$next_url,
+					array(
+						'base'   => str_replace( '999999999', '%#%', esc_url_raw( add_query_arg( 'kv2ps_page', '999999999' ) ) ),
+						'format' => '',
+					)
+				);
+			}
 			echo '</section>';
 			if ( self::enabled( $atts['show_cta'] ) ) {
 				self::render_cta( 0 );
@@ -348,7 +598,7 @@ final class KV2PS_Plugin {
 		$layout   = isset( $values['layout'] ) && in_array( $values['layout'], array( 'grid', 'tiles', 'masonry' ), true ) ? $values['layout'] : $settings['archive_layout'];
 		$ratio    = isset( $values['image_ratio'] ) && in_array( $values['image_ratio'], array( 'auto', '1-1', '4-3', '3-2', '16-9' ), true ) ? $values['image_ratio'] : $settings['archive_image_ratio'];
 		$card     = isset( $values['card_style'] ) && in_array( $values['card_style'], array( 'classic', 'minimal', 'elevated', 'overlay' ), true ) ? $values['card_style'] : $settings['archive_card_style'];
-		$load     = isset( $values['load_mode'] ) && in_array( $values['load_mode'], array( 'paged', 'button', 'infinite' ), true ) ? $values['load_mode'] : $settings['archive_load_mode'];
+		$load     = isset( $values['load_mode'] ) && in_array( $values['load_mode'], array( 'none', 'paged', 'button', 'infinite' ), true ) ? $values['load_mode'] : $settings['archive_load_mode'];
 		return array(
 			'layout'      => $layout,
 			'columns'     => max( 1, min( 3, isset( $values['columns'] ) ? absint( $values['columns'] ) : absint( $settings['archive_columns'] ) ) ),
@@ -432,8 +682,8 @@ final class KV2PS_Plugin {
 				<form class="kv2ps-search" action="<?php echo esc_url( $base_url ); ?>" method="get" role="search">
 					<label class="kv2ps-sr-only" for="kv2ps-search-<?php echo esc_attr( $key ); ?>"><?php esc_html_e( 'Rechercher dans les réalisations', 'kv2-portfolio-studio' ); ?></label>
 					<?php if ( $active_service ) : ?><input name="kv2ps_service" type="hidden" value="<?php echo esc_attr( $active_service ); ?>"><?php endif; ?>
-					<input id="kv2ps-search-<?php echo esc_attr( $key ); ?>" name="kv2ps_search" placeholder="<?php esc_attr_e( 'Recherche…', 'kv2-portfolio-studio' ); ?>" type="search" value="<?php echo esc_attr( $search ); ?>">
-					<button class="kv2ps-sr-only" type="submit"><?php esc_html_e( 'Rechercher', 'kv2-portfolio-studio' ); ?></button>
+					<input id="kv2ps-search-<?php echo esc_attr( $key ); ?>" name="kv2ps_search" placeholder="<?php echo esc_attr( self::PROFILE_ROOFING === self::business_profile() ? __( 'Titre, travaux ou ville…', 'kv2-portfolio-studio' ) : __( 'Titre, service ou ville…', 'kv2-portfolio-studio' ) ); ?>" type="search" value="<?php echo esc_attr( $search ); ?>">
+					<button class="kv2ps-search-submit" type="submit"><?php esc_html_e( 'Rechercher', 'kv2-portfolio-studio' ); ?></button>
 				</form>
 			<?php endif; ?>
 			<p class="kv2ps-filter-status kv2ps-sr-only" aria-live="polite"></p>
@@ -570,9 +820,39 @@ final class KV2PS_Plugin {
 		$post_id       = get_the_ID();
 		$service_terms = get_the_terms( get_the_ID(), 'kv2_service' );
 		$service_terms = is_wp_error( $service_terms ) ? array() : (array) $service_terms;
-		$terms         = get_the_term_list( get_the_ID(), 'kv2_service', '', ', ' );
-		$service_slugs = implode( ' ', wp_list_pluck( $service_terms, 'slug' ) );
-		$search_text   = implode( ' ', array( get_the_title(), get_the_excerpt(), wp_strip_all_tags( $terms ) ) );
+		$term_labels   = array();
+		$service_tax   = get_taxonomy( 'kv2_service' );
+		foreach ( $service_terms as $service_term ) {
+			$term_url = get_term_meta( $service_term->term_id, '_kv2ps_landing_url', true );
+			if ( ! $term_url && $service_tax && $service_tax->publicly_queryable ) {
+				$term_url = get_term_link( $service_term );
+			}
+			$term_labels[] = $term_url && ! is_wp_error( $term_url )
+				? '<a href="' . esc_url( $term_url ) . '">' . esc_html( $service_term->name ) . '</a>'
+				: esc_html( $service_term->name );
+		}
+		$terms             = implode( ', ', $term_labels );
+		$service_slugs     = implode( ' ', wp_list_pluck( $service_terms, 'slug' ) );
+		$confidential      = (bool) get_post_meta( $post_id, '_kv2ps_confidential', true );
+		$search_taxonomies = KV2PS_Post_Types::taxonomies();
+		if ( $confidential ) {
+			$search_taxonomies = array_values( array_diff( $search_taxonomies, array( 'kv2_ville' ) ) );
+		}
+		$search_terms = wp_get_object_terms( $post_id, $search_taxonomies, array( 'fields' => 'names' ) );
+		$search_terms = is_wp_error( $search_terms ) ? array() : $search_terms;
+		$location     = $confidential ? array() : KV2PS_Post_Types::get_location( $post_id );
+		$search_text  = implode( ' ', array_merge( array( get_the_title(), get_the_excerpt() ), $search_terms, $location ) );
+		$lightbox_labels = array();
+		foreach ( $search_taxonomies as $taxonomy ) {
+			$taxonomy_terms = get_the_terms( $post_id, $taxonomy );
+			if ( is_wp_error( $taxonomy_terms ) || ! $taxonomy_terms ) {
+				continue;
+			}
+			foreach ( $taxonomy_terms as $taxonomy_term ) {
+				$lightbox_labels[] = $taxonomy_term->name;
+			}
+		}
+		$lightbox_meta = implode( ' • ', array_values( array_unique( array_filter( array_map( 'sanitize_text_field', $lightbox_labels ) ) ) ) );
 		$image_id      = get_post_thumbnail_id( $post_id );
 		if ( ! $image_id ) {
 			$after_ids  = KV2PS_Post_Types::sanitize_ids( get_post_meta( $post_id, '_kv2ps_after_images', true ) );
@@ -583,9 +863,13 @@ final class KV2PS_Plugin {
 			$source_id = absint( get_post_meta( $post_id, '_kv2ps_source_wp_portfolio_id', true ) );
 			$image_id  = $source_id ? KV2PS_Importer::find_source_image_id( $source_id ) : 0;
 		}
+		$destination = KV2PS_Compatibility::card_destination( $post_id, $image_id );
+		$link_attrs  = $destination['lightbox']
+			? ' data-kv2ps-lightbox="1" data-kv2ps-lightbox-title="' . esc_attr( get_the_title() ) . '" data-kv2ps-lightbox-meta="' . esc_attr( $lightbox_meta ) . '"'
+			: '';
 		?>
 		<article <?php post_class( 'kv2ps-card' ); ?> data-kv2ps-services="<?php echo esc_attr( $service_slugs ); ?>" data-kv2ps-search="<?php echo esc_attr( remove_accents( strtolower( $search_text ) ) ); ?>">
-			<a class="kv2ps-card__image" href="<?php the_permalink(); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Voir la réalisation : %s', 'kv2-portfolio-studio' ), get_the_title() ) ); ?>">
+			<a class="kv2ps-card__image" href="<?php echo esc_url( $destination['url'] ); ?>"<?php echo $link_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?> aria-label="<?php echo esc_attr( sprintf( __( 'Voir la réalisation : %s', 'kv2-portfolio-studio' ), get_the_title() ) ); ?>">
 				<?php
 				if ( $image_id ) {
 					$image_html = wp_get_attachment_image(
@@ -611,7 +895,7 @@ final class KV2PS_Plugin {
 				<?php if ( $terms ) : ?>
 					<div class="kv2ps-eyebrow"><?php echo wp_kses_post( $terms ); ?></div>
 				<?php endif; ?>
-				<h2 class="kv2ps-card__title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
+				<h2 class="kv2ps-card__title"><a href="<?php echo esc_url( $destination['url'] ); ?>"<?php echo $link_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><?php the_title(); ?></a></h2>
 				<?php if ( has_excerpt() ) : ?>
 					<p><?php echo esc_html( get_the_excerpt() ); ?></p>
 				<?php endif; ?>

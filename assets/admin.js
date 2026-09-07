@@ -43,6 +43,7 @@
           );
         });
       $field.find(".kv2ps-gallery-ids").val(current.join(","));
+			markChecklistPending();
     });
 
     frame.open();
@@ -58,7 +59,64 @@
       })
       .get();
     $field.find(".kv2ps-gallery-ids").val(ids.join(","));
+		markChecklistPending();
   });
+
+	function markChecklistPending() {
+		$("#kv2ps-checklist-note")
+			.text(kv2psAdmin.checklistPending)
+			.addClass("is-pending");
+	}
+
+	function refreshChecklist() {
+		var $body = $("#kv2ps-completeness-body");
+		if (!$body.length || !$body.data("post-id")) {
+			return;
+		}
+
+		$.post(kv2psAdmin.ajaxUrl, {
+			action: "kv2ps_completeness_report",
+			post_id: $body.data("post-id"),
+			nonce: $body.data("nonce"),
+		})
+			.done(function (response) {
+				if (response && response.success && response.data && response.data.html) {
+					$body.html(response.data.html);
+					return;
+				}
+				$("#kv2ps-checklist-note").text(kv2psAdmin.checklistError);
+			})
+			.fail(function () {
+				$("#kv2ps-checklist-note").text(kv2psAdmin.checklistError);
+			});
+	}
+
+	$(document).on("click", "#kv2ps-refresh-checklist", function () {
+		refreshChecklist();
+	});
+
+	$(document).on(
+		"input change",
+		"#poststuff input, #poststuff textarea, .editor-post-taxonomies__hierarchical-terms-list input, .components-form-token-field__input",
+		function () {
+			markChecklistPending();
+		},
+	);
+
+	if (window.wp && wp.data && wp.data.select("core/editor")) {
+		var wasSavingPost = false;
+		wp.data.subscribe(function () {
+			var editor = wp.data.select("core/editor");
+			var isSavingPost =
+				editor.isSavingPost() ||
+				(typeof editor.isSavingMetaBoxes === "function" &&
+					editor.isSavingMetaBoxes());
+			if (wasSavingPost && !isSavingPost && editor.didPostSaveRequestSucceed()) {
+				window.setTimeout(refreshChecklist, 800);
+			}
+			wasSavingPost = isSavingPost;
+		});
+	}
 
   $(".kv2ps-gallery-preview").sortable({
     items: ".kv2ps-gallery-item",
@@ -72,12 +130,24 @@
         })
         .get();
       $field.find(".kv2ps-gallery-ids").val(ids.join(","));
+			markChecklistPending();
     },
   });
 
   $("#kv2ps-select-all").on("change", function () {
     $(".kv2ps-source-checkbox:not(:disabled)").prop("checked", this.checked);
   });
+
+	$("#kv2ps-select-published").on("click", function () {
+		$(".kv2ps-source-checkbox:not(:disabled)").each(function () {
+			this.checked = $(this).data("source-status") === "publish";
+		});
+		$("#kv2ps-select-all").prop("checked", false);
+	});
+
+	$(document).on("click", ".kv2ps-use-destination-candidate", function () {
+		$("#kv2ps-destination-url").val($(this).data("candidate") || "").trigger("change");
+	});
 
   $(document).on("click", ".kv2ps-download-json", function () {
     var source = $(this)
