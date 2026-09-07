@@ -3,7 +3,7 @@ Contributors: kv2
 Tags: portfolio, seo, image metadata, exif, rank math
 Requires at least: 6.5
 Requires PHP: 7.4
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 License: Proprietary
 
 Portfolio de réalisations SEO-first, profils métiers, import Astra Portfolio et flux de métadonnées d’images avec ChatGPT.
@@ -20,6 +20,10 @@ Portfolio de réalisations SEO-first, profils métiers, import Astra Portfolio e
 Le plugin ne supprime aucune donnée à la désinstallation. Le module EXIF lit le fichier original mais ne le réécrit pas dans la version 1.1.
 
 == Changelog ==
+
+= 1.2.2 =
+* Reconstruit le paquet de mise à jour avec un seul dossier de plugin afin que WordPress remplace bien tous les fichiers.
+* Force le renouvellement des ressources CSS et JavaScript après la correction des ancres de filtres.
 
 = 1.2.1 =
 * Ajoute une ancre stable à chaque galerie du shortcode.
