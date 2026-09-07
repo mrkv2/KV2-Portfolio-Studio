@@ -27,6 +27,11 @@
       "project_date": "",
       "confidential": false
     },
+    "location": {
+      "city": "Ville Exemple",
+      "department": "92",
+      "postal_code": "92000"
+    },
     "testimonial": {
       "quote": "",
       "author": "",
@@ -40,7 +45,7 @@
       "services": [
         { "name": "Restauration de fauteuil", "slug": "restauration-fauteuil" }
       ],
-      "villes": [{ "name": "Ville Exemple", "slug": "ville-exemple" }],
+      "villes": [{ "name": "Ville Exemple (92)", "slug": "ville-exemple" }],
       "meubles": [{ "name": "Fauteuil bridge", "slug": "fauteuil-bridge" }],
       "styles": [],
       "techniques": [{ "name": "Garnissage", "slug": "garnissage" }]
