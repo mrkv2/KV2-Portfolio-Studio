@@ -65,11 +65,13 @@ Le PHP système n'étant pas présent dans le `PATH`, utiliser le binaire Plesk 
 /opt/plesk/php/8.3/bin/php -d memory_limit=1G /usr/local/bin/wp eval '$r=new WP_REST_Request("GET","/wp/v2/kv2_ville_terms");$r->set_param("per_page",3);$x=rest_do_request($r);print_r($x->get_data());' --allow-root --skip-plugins=elementor,elementor-pro
 ```
 
-## Version
+## Version et état du dépôt
 
 - Version du plugin installée au moment de l'incident : **1.2.2**.
 - Correctif appliqué en production comme hotfix le **12/09/2026**.
-- À intégrer dans le code source et le prochain paquet publié sous **1.2.3** (ou version supérieure) avant toute mise à jour du plugin sur les sites concernés.
+- Correctif également synchronisé dans la branche `main` du dépôt le **12/09/2026** (`includes/class-kv2ps-post-types.php`).
+- Le numéro de version reste volontairement **1.2.2** dans le dépôt tant qu'un paquet de release complet n'est pas préparé, afin de ne pas créer un faux décalage avec la production.
+- Prochaine release recommandée : **1.2.3** (ou supérieure), incluant ce correctif avant tout redéploiement sur les sites concernés.
 
 ## Garde-fou pour les futures versions
 
