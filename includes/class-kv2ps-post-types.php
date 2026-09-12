@@ -129,6 +129,7 @@ final class KV2PS_Post_Types {
 			if ( 'kv2_ville' === $taxonomy ) {
 				// La localisation est saisie une seule fois dans un bloc dédié.
 				$args['meta_box_cb'] = false;
+				$args['rest_base']   = 'kv2_ville_terms';
 			}
 
 			register_taxonomy( $taxonomy, self::POST_TYPE, $args );
