@@ -65,7 +65,17 @@ Le rendu public enveloppe le template de réalisation déjà sélectionné par l
 - `templates/single-kv2_realisation-ets-mon-toit.php`
 - `tests/ets-mon-toit-video-contract.php`
 
-La CI exécute en plus le contrat `ETS Mon Toit video contract` sous PHP 7.4 et PHP 8.3.
+La CI exécute le contrat `ETS Mon Toit video contract` sous PHP 7.4 et PHP 8.3. Une exécution complète de la branche a été validée avec succès le 16/09/2026 après l'ajout du module vidéo.
+
+## Paquet WordPress
+
+La CI de la branche construit désormais, sur PHP 8.3, un ZIP installable nommé :
+
+`kv2-portfolio-studio-1.3.0-emt.1.zip`
+
+Le ZIP contient un unique dossier racine `kv2-portfolio-studio`, afin que WordPress remplace correctement l'extension existante au lieu d'installer une seconde copie sous un autre nom de dossier.
+
+Le paquet exclut les dossiers de développement `.github`, `tests`, `docs` et `dist`.
 
 ## Premier cas de recette
 
@@ -129,6 +139,6 @@ Le numéro du paquet installé doit permettre de retrouver sans ambiguïté la b
 - version source : `1.3.0-emt.1` ;
 - correctif REST `kv2_ville` présent ;
 - support des vidéos de chantier : implémenté sur la branche ;
-- contrat CI dédié : ajouté ;
-- recette GitHub : en cours au moment de cette mise à jour ;
-- déploiement sur `ets-mon-toit.fr` : non effectué tant que la CI et la recette ne sont pas validées.
+- tests CI du module : validés ;
+- construction automatique du ZIP : ajoutée à la CI ;
+- déploiement sur `ets-mon-toit.fr` : non effectué tant que le paquet final n'a pas été récupéré et testé en production/recette.
