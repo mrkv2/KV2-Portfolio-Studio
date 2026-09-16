@@ -3,7 +3,7 @@ Contributors: kv2
 Tags: portfolio, seo, image metadata, exif, rank math
 Requires at least: 6.5
 Requires PHP: 7.4
-Stable tag: 1.2.2
+Stable tag: 1.3.0-emt.1
 License: Proprietary
 
 Portfolio de réalisations SEO-first, profils métiers, import Astra Portfolio et flux de métadonnées d’images avec ChatGPT.
@@ -20,6 +20,17 @@ Portfolio de réalisations SEO-first, profils métiers, import Astra Portfolio e
 Le plugin ne supprime aucune donnée à la désinstallation. Le module EXIF lit le fichier original mais ne le réécrit pas dans la version 1.1.
 
 == Changelog ==
+
+= 1.3.0-emt.1 =
+* Ajoute la variante ETS Mon Toit avec un bloc distinct « Vidéos du chantier ».
+* Permet de sélectionner, réordonner et retirer plusieurs vidéos WordPress sans modifier les galeries photo avant/après.
+* Ajoute un lecteur HTML5 responsive avec controls, playsinline et preload metadata, adapté aux vidéos verticales WhatsApp.
+* Conserve le correctif REST de kv2_ville et la séparation de route kv2_ville_terms.
+* Ajoute un contrat CI spécifique et la construction automatique d’un ZIP WordPress à dossier racine unique.
+
+= 1.2.3-emt.1 =
+* Initialise la branche spécifique site/ets-mon-toit à partir du noyau 1.2.2.
+* Conserve le correctif de collision REST de la taxonomie kv2_ville pour les sites chargeant aussi un CPT de même clé.
 
 = 1.2.2 =
 * Reconstruit le paquet de mise à jour avec un seul dossier de plugin afin que WordPress remplace bien tous les fichiers.
