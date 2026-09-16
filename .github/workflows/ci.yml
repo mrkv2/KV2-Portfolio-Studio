@@ -35,3 +35,5 @@ jobs:
         run: php tests/single-layout-contract.php
       - name: Editor experience contract
         run: php tests/editor-experience-contract.php
+      - name: ETS Mon Toit video contract
+        run: php tests/ets-mon-toit-video-contract.php
