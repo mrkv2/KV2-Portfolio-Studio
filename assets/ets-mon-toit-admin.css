@@ -1,0 +1,59 @@
+.kv2ps-emt-video-field .description {
+  max-width: 900px;
+}
+
+.kv2ps-emt-video-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.kv2ps-emt-video-item {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.kv2ps-emt-video-item video {
+  display: block;
+  width: 100%;
+  max-height: 300px;
+  background: #111;
+  object-fit: contain;
+}
+
+.kv2ps-emt-video-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 46px;
+  padding: 10px 42px 10px 12px;
+  cursor: move;
+}
+
+.kv2ps-emt-video-meta strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kv2ps-emt-video-meta span {
+  color: #646970;
+  font-size: 12px;
+}
+
+.kv2ps-emt-remove-video {
+  position: absolute;
+  right: 12px;
+  bottom: 11px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 22px;
+  line-height: 20px;
+  text-align: center;
+}
