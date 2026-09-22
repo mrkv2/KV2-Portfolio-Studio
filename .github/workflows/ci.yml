@@ -35,3 +35,25 @@ jobs:
         run: php tests/single-layout-contract.php
       - name: Editor experience contract
         run: php tests/editor-experience-contract.php
+      - name: Tapissier Laurot video contract
+        run: php tests/tapissier-laurot-video-contract.php
+      - name: Build Tapissier Laurot WordPress ZIP
+        if: github.ref == 'refs/heads/site/tapissier-laurot' && matrix.php-version == '8.3'
+        run: |
+          rm -rf dist
+          mkdir -p dist/kv2-portfolio-studio
+          rsync -a ./ dist/kv2-portfolio-studio/ \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'dist/' \
+            --exclude 'tests/' \
+            --exclude 'docs/'
+          cd dist
+          zip -qr kv2-portfolio-studio-1.2.3-laurot.1.zip kv2-portfolio-studio
+      - name: Upload Tapissier Laurot WordPress ZIP
+        if: github.ref == 'refs/heads/site/tapissier-laurot' && matrix.php-version == '8.3'
+        uses: actions/upload-artifact@v4
+        with:
+          name: kv2-portfolio-studio-1.2.3-laurot.1
+          path: dist/kv2-portfolio-studio-1.2.3-laurot.1.zip
+          if-no-files-found: error

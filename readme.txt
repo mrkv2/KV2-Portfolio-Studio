@@ -3,7 +3,7 @@ Contributors: kv2
 Tags: portfolio, seo, image metadata, exif, rank math
 Requires at least: 6.5
 Requires PHP: 7.4
-Stable tag: 1.2.2
+Stable tag: 1.2.3-laurot.1
 License: Proprietary
 
 Portfolio de réalisations SEO-first, profils métiers, import Astra Portfolio et flux de métadonnées d’images avec ChatGPT.
@@ -20,6 +20,13 @@ Portfolio de réalisations SEO-first, profils métiers, import Astra Portfolio e
 Le plugin ne supprime aucune donnée à la désinstallation. Le module EXIF lit le fichier original mais ne le réécrit pas dans la version 1.1.
 
 == Changelog ==
+
+= 1.2.3-laurot.1 =
+* Variante Tapissier Laurot basée strictement sur le noyau 1.2.2.
+* Ajoute un bloc « Vidéos de la réalisation » aux fiches de réalisation.
+* Permet de sélectionner plusieurs vidéos depuis la médiathèque, de les réordonner et de les retirer indépendamment des photos.
+* Ajoute un lecteur HTML5 responsive adapté aux courtes vidéos verticales, sans autoplay sonore.
+* Conserve les photos avant/après, l’image principale, le SEO, Rank Math, les CTA et les données structurées existantes.
 
 = 1.2.2 =
 * Reconstruit le paquet de mise à jour avec un seul dossier de plugin afin que WordPress remplace bien tous les fichiers.
